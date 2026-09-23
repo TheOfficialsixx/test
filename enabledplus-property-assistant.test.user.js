@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.6.0
+// @version      0.7.16
 // @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
@@ -47,10 +47,107 @@
     green:{label:'Green',bg:'#10201c',surface:'#192e27',field:'#0d1a16',text:'#edf8ef',muted:'#c1d8c8',accent:'#8de1ac',pink:'#b8e798',border:'#61806d',button:'#284b39',hover:'#356449',heading:'#b9f3cb',header:'#163c2b',warning:'#f6d38a',danger:'#ff9aab',dangerBg:'#39202a',success:'#91eeb0',successBg:'#143828'},
     gothic:{label:'Gothic',bg:'#100f14',surface:'#1e1a24',field:'#121015',text:'#f5edf4',muted:'#d1bed0',accent:'#e6b8e4',pink:'#ffa1bd',border:'#826b82',button:'#3c2235',hover:'#593048',heading:'#ffd5df',header:'#2e1828',warning:'#eed093',danger:'#ff9eb0',dangerBg:'#3f1623',success:'#a0dfc0',successBg:'#17372a'}
   };
+  // Made by Montana. Holiday palettes are artistic choices, not official religious colors.
+  // Manual selection only: no religion inference, calendar switching, or extra permissions.
+  function darkPalette(label,group,bg,surface,accent,pink,heading){
+    return {label,group,bg,surface,field:bg,text:'#fff5fb',muted:'#ddd3df',accent,pink,border:'#827589',button:surface,hover:'#3b3044',heading,header:bg,warning:'#ffdc96',danger:'#ffb0bd',dangerBg:'#351821',success:'#a3efbd',successBg:'#123526'};
+  }
+  const extraPalettes=[
+    ['purpleBlue','Purple & Blue','Color palettes','#141126','#211a35','#a8d9ff','#d8b7ff','#e2d0ff'],
+    ['hotPink','Hot Pink','Color palettes','#230c1b','#35172e','#ffb3e0','#ffa1d6','#ffd3ec'],
+    ['gold','Golden Hour','Color palettes','#211909','#302616','#ffe09c','#ffcf83','#fff0be'],
+    ['powderBlue','Powder Blue','Color palettes','#101e2a','#1d2c39','#b5e1ff','#c7d5ff','#def2ff'],
+    ['purpleSoftPink','Purple & Soft Pink','Color palettes','#201327','#301f39','#d9baff','#ffcade','#f5dcff'],
+    ['burgundy','Burgundy','Color palettes','#260f19','#371d29','#ffc5d3','#eeb6c9','#ffe0e7'],
+    ['burgundyForest','Burgundy & Forest','Color palettes','#111f1a','#24352d','#b5e9c4','#ffc0d3','#ffdae3'],
+    ['dustyPink','Dusty Pink','Color palettes','#251b22','#352831','#eac2d0','#f3bccb','#ffe1e8'],
+    ['brown','Cocoa Brown','Color palettes','#211813','#33271e','#ecd2ae','#e9bfae','#ffe8c9'],
+    ['royalPurple','Royal Purple','Color palettes','#1b0e2c','#2a1940','#d4baff','#e6b4f5','#f0dcff'],
+    ['newYear','New Year · Midnight Gold','Seasonal & secular','#101726','#202b39','#c0ddff','#ffe2a1','#fff0c8'],
+    ['valentine','Valentine’s Day','Seasonal & secular','#250d1c','#381a2d','#ffc1e1','#ffadc8','#ffe0ec'],
+    ['stPatrick','St. Patrick’s Day','Seasonal & secular','#0c2017','#1b3326','#b9f1bd','#ffe19c','#e6ffd7'],
+    ['earthDay','Earth Day','Seasonal & secular','#101e20','#203237','#b0e8d1','#b9ddff','#e4f6cd'],
+    ['pride','Pride · Rainbow Accents','Seasonal & secular','#171225','#281f36','#a9e9ff','#ffb6df','#ffe5a4'],
+    ['halloween','Halloween','Seasonal & secular','#1b1026','#2c1e38','#dabdff','#ffd0a0','#ffe2b8'],
+    ['thanksgiving','Thanksgiving · Harvest','Seasonal & secular','#21150f','#35261c','#ffdda6','#ffc0a5','#fff0c9'],
+    ['solstice','Winter Solstice','Seasonal & secular','#0c1d2a','#1c3040','#bce9ff','#c9c5ff','#e3f5ff'],
+    ['christmas','Christmas · Evergreen','Christian holidays','#102019','#22362b','#bff0c7','#ffb8bf','#ffe5a8'],
+    ['advent','Advent · Violet & Rose','Christian holidays','#1c102b','#2c1d3e','#d9bfff','#ffc8e1','#efe0ff'],
+    ['epiphany','Epiphany · Starlight','Christian holidays','#12152c','#222740','#c7d2ff','#ffe1a2','#fff0c8'],
+    ['lent','Lent · Quiet Violet','Christian holidays','#1c1527','#2b2437','#d9c6ef','#d8c4dd','#eee1fb'],
+    ['goodFriday','Good Friday · Quiet Burgundy','Christian holidays','#1d131a','#30222c','#e9c6d8','#f0bccd','#f7dce6'],
+    ['easter','Easter · Lilac & Blossom','Christian holidays','#1c172b','#2b2640','#dbcaff','#ffd0e3','#fff1c5'],
+    ['pentecost','Pentecost · Crimson Gold','Christian holidays','#250f16','#371e26','#ffc4c4','#ffdfaa','#fff0cf'],
+    ['hanukkah','Hanukkah · Blue & Silver','Jewish holidays','#0e182a','#1d2c42','#bddfff','#d7e5f5','#eef6ff'],
+    ['passover','Passover · Spring','Jewish holidays','#14201c','#25342c','#cae9c4','#ffe0ae','#f1f4d0'],
+    ['roshHashanah','Rosh Hashanah · Honey','Jewish holidays','#22180f','#34271b','#ffe3a8','#ffc7bd','#fff1c9'],
+    ['yomKippur','Yom Kippur · Quiet Silver','Jewish holidays','#171c25','#282f3b','#d7e2f2','#d3d5eb','#f1f3f8'],
+    ['sukkot','Sukkot · Orchard','Jewish holidays','#162016','#293626','#d0efb7','#ffdeb0','#f1f3c5'],
+    ['purim','Purim · Jewel Colors','Jewish holidays','#21102b','#321e40','#c7d0ff','#ffbfe4','#ffe4ae'],
+    ['shavuot','Shavuot · Flowers','Jewish holidays','#172321','#283835','#c4eacf','#e4d0ff','#f2f5e0'],
+    ['simchatTorah','Simchat Torah · Celebration','Jewish holidays','#111c2c','#223048','#c1e5ff','#e6c3ff','#ffe9b7'],
+    ['ramadan','Ramadan · Emerald Gold','Islamic holidays & observances','#0e211f','#1d3631','#b7eed8','#ffe1a0','#fff0c4'],
+    ['eidFitr','Eid al-Fitr · Rose Gold','Islamic holidays & observances','#231425','#35243a','#f2c8e7','#ffd4b3','#fff0cf'],
+    ['eidAdha','Eid al-Adha · Teal Gold','Islamic holidays & observances','#0c2028','#1c3540','#aee8eb','#ffe0aa','#fff0ce'],
+    ['islamicNewYear','Islamic New Year · Midnight','Islamic holidays & observances','#111a2b','#232e42','#c4dbff','#dfcaff','#ffe8b9'],
+    ['ashura','Ashura · Quiet Teal','Islamic holidays & observances','#132020','#253333','#c7e2de','#d6dce9','#eaf1ed'],
+    ['mawlid','Mawlid · Green & Cream','Islamic holidays & observances','#152219','#28392c','#c5ecc9','#f0debd','#fff3d8'],
+    ['diwali','Diwali · Festival Lights','More celebrations','#23132a','#35233f','#e9c4ff','#ffd4a3','#fff0bc'],
+    ['holi','Holi · Bright Blossoms','More celebrations','#1d142c','#30243e','#b9e8ff','#ffbfe4','#ffe7ae'],
+    ['lunarNewYear','Lunar New Year · Red Gold','More celebrations','#260f15','#3a2026','#ffc6c6','#ffdfa0','#fff0c0'],
+    ['nowruz','Nowruz · Spring Garden','More celebrations','#12221d','#25382e','#bceaca','#edc9ff','#fff0bd'],
+    ['vesak','Vesak · Lotus Glow','More celebrations','#21172b','#33263f','#ddd0ff','#ffd0df','#ffebaf'],
+    ['vaisakhi','Vaisakhi · Golden Spring','More celebrations','#201b10','#332c1e','#ffe5a6','#c7e6b5','#fff1c7'],
+    ['kwanzaa','Kwanzaa · Red & Green','More celebrations','#151b16','#273429','#c5ecc6','#ffbfc2','#ffe7bc']
+  ];
+  for(const [key,...palette] of extraPalettes)THEMES[key]=darkPalette(...palette);
+  // Made by Montana. Local vector artwork: no remote images, tracking, or page interaction.
+  const THEME_ICONS={
+    star:'<path d="m16 3 4 8 9 2-7 6 1 10-7-5-8 5 2-10-7-6 9-2z"/>',
+    moon:'<path d="M24 4A13 13 0 1 0 28 25 14 14 0 0 1 24 4Z"/>',
+    bat:'<path d="m2 10 8 4 3-7 3 4 3-4 3 7 8-4-3 13-6-3-5 7-5-7-6 3z"/>',
+    ghost:'<path d="M6 29V13a10 10 0 0 1 20 0v16l-5-4-5 4-5-4z"/><path d="M12 12v4m8-4v4" stroke="BACKGROUND" stroke-width="3"/>',
+    tree:'<path d="m16 2 8 10h-4l8 10H4l8-10H8z"/><path d="M14 22h4v7h-4z"/>',
+    truck:'<path d="M2 17h16V9h8l5 8v9H2z"/><path d="M21 11h4l3 6h-7z" fill="BACKGROUND"/><circle cx="8" cy="27" r="4"/><circle cx="25" cy="27" r="4"/><path d="m9 1 7 7h-3l5 6H1l5-6H3z"/>',
+    heart:'<path d="M16 28 3 15C-4 2 12-2 16 8 21-2 36 3 29 15Z"/>',
+    flower:'<g><circle cx="16" cy="8" r="6"/><circle cx="24" cy="15" r="6"/><circle cx="21" cy="24" r="6"/><circle cx="10" cy="24" r="6"/><circle cx="7" cy="14" r="6"/><circle cx="16" cy="16" r="4" fill="BACKGROUND"/></g>',
+    leaf:'<path d="M4 28C-2 6 14 1 29 3 31 24 17 31 4 28Z"/><path d="m5 27 19-18" stroke="BACKGROUND" stroke-width="2"/>',
+    crown:'<path d="m3 9 7 6 6-12 6 12 7-6-4 18H7z"/>',
+    diamond:'<path d="m8 4 16 0 7 9-15 17L1 13z"/><path d="M1 13h30M8 4l8 26L24 4" fill="none" stroke="BACKGROUND"/>',
+    wave:'<path d="M0 10Q8 1 16 10T32 10M0 20Q8 11 16 20T32 20M0 29Q8 20 16 29T32 29" fill="none" stroke="currentColor" stroke-width="3"/>',
+    bow:'<path d="M15 15C-3-4-4 29 15 18v11l4-9 7 7-7-11C39-4 33 29 18 17z"/>',
+    mug:'<path d="M3 11h20v15H3zM23 13h6v8h-6"/><path d="M8 8Q3 4 8 1m8 7q-5-4 0-7" fill="none" stroke="currentColor" stroke-width="2"/>',
+    skyline:'<path d="M1 30V15h6v15h3V6h7v24h3V12h6v18h4V1h2v29z"/>',
+    firework:'<path d="M16 1v8m0 14v8M1 16h8m14 0h8M5 5l6 6m10 10 6 6M5 27l6-6M21 11l6-6" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="3"/>',
+    lantern:'<path d="M10 4h12v3H10zm-4 6h20v15H6zm4 18h12v3H10z"/><path d="M12 10v15m8-15v15" stroke="BACKGROUND" stroke-width="2"/>',
+    candle:'<path d="M12 13h8v17h-8zM16 1q-10 11 0 10 9 0 0-10"/>',
+    egg:'<path d="M16 2C4 3-3 29 16 30 35 29 28 3 16 2Z"/><path d="m5 19 5-3 6 3 6-3 5 3" fill="none" stroke="BACKGROUND" stroke-width="2"/>',
+    cross:'<path d="M12 2h8v8h10v7H20v14h-8V17H2v-7h10z"/>',
+    snow:'<path d="M16 1v30M3 8l26 16M3 24 29 8M11 4l5 4 5-4M11 28l5-4 5 4" stroke="currentColor" stroke-width="2"/>',
+    apple:'<path d="M16 10C-3-4-3 29 12 30h8C35 29 36-4 16 10Zm0-3q0-7 9-6-1 7-9 6"/>',
+    wheat:'<path d="M16 31V3M16 11Q2 13 5 2q11 2 11 9M16 21Q2 23 5 12q11 2 11 9M16 15Q30 17 27 6q-11 2-11 9M16 26q14 2 11-9-11 2-11 9" fill="none" stroke="currentColor" stroke-width="2"/>',
+    book:'<path d="M2 4q8-3 14 2 6-5 14-2v24q-8-3-14 1-6-4-14-1z"/><path d="M16 6v23" stroke="BACKGROUND" stroke-width="2"/>',
+    lotus:'<path d="M16 29Q-2 26 2 11q9 1 14 18Q8 11 16 1q8 10 0 28 18-3 14-18-9 1-14 18Z"/>',
+    lamp:'<path d="M2 19h28q-4 14-14 11Q5 32 2 19Zm14-3Q4 12 16 1q12 11 0 15"/>',
+    pumpkin:'<ellipse cx="16" cy="19" rx="14" ry="11"/><path d="M16 9V2h5M11 12v14m10-14v14" stroke="BACKGROUND" stroke-width="2"/>',
+    globe:'<circle cx="16" cy="16" r="14"/><path d="M2 16h28M16 2q-14 14 0 28 14-14 0-28" fill="none" stroke="BACKGROUND" stroke-width="2"/>',
+    rainbow:'<path d="M2 28V18a14 14 0 0 1 28 0v10M8 28V18a8 8 0 0 1 16 0v10M14 28V18a2 2 0 0 1 4 0v10" fill="none" stroke="currentColor" stroke-width="3"/>',
+    menorah:'<path d="M16 2v27M2 8v9q0 8 14 8t14-8V8M6 8v8q0 6 10 6t10-6V8M10 8v7q0 4 6 4t6-4V8M14 8v6q0 2 2 2t2-2V8M9 29h14" fill="none" stroke="currentColor" stroke-width="2"/>',
+    mask:'<path d="M2 6q14 7 28 0v12Q16 39 2 18z"/><path d="m7 13 5 2m8 0 5-2M10 23q6 5 12-1" fill="none" stroke="BACKGROUND" stroke-width="3"/>'
+  };
+  const THEME_ART={destiny:['skyline','star','wave'],pop:['bow','heart','flower'],green:['leaf','tree','leaf'],gothic:['bat','moon','crown'],purpleBlue:['moon','wave','star'],hotPink:['heart','diamond','bow'],gold:['diamond','star','crown'],powderBlue:['wave','snow','wave'],purpleSoftPink:['flower','moon','heart'],burgundy:['flower','diamond','flower'],burgundyForest:['tree','flower','leaf'],dustyPink:['bow','flower','bow'],brown:['mug','leaf','mug'],royalPurple:['crown','diamond','crown'],newYear:['firework','star','firework'],valentine:['heart','bow','heart'],stPatrick:['leaf','crown','leaf'],earthDay:['globe','leaf','wave'],pride:['rainbow','heart','star'],halloween:['bat','ghost','pumpkin'],thanksgiving:['pumpkin','wheat','leaf'],solstice:['snow','moon','tree'],christmas:['tree','truck','snow'],advent:['candle','flower','candle'],epiphany:['star','crown','star'],lent:['cross','leaf','candle'],goodFriday:['cross','candle','cross'],easter:['egg','flower','cross'],pentecost:['lamp','cross','lamp'],hanukkah:['menorah','star','menorah'],passover:['book','wheat','book'],roshHashanah:['apple','flower','apple'],yomKippur:['book','candle','book'],sukkot:['leaf','apple','tree'],purim:['mask','star','mask'],shavuot:['flower','book','wheat'],simchatTorah:['book','star','flower'],ramadan:['lantern','moon','star'],eidFitr:['moon','flower','lantern'],eidAdha:['lantern','star','leaf'],islamicNewYear:['moon','star','wave'],ashura:['wave','book','wave'],mawlid:['flower','lantern','leaf'],diwali:['lamp','flower','lamp'],holi:['flower','firework','flower'],lunarNewYear:['lantern','firework','lantern'],nowruz:['flower','apple','leaf'],vesak:['lotus','lamp','lotus'],vaisakhi:['wheat','flower','wheat'],kwanzaa:['candle','wheat','candle']};
+  function themeArtwork(key){
+    const t=THEMES[key],icons=THEME_ART[key]||THEME_ART.destiny;
+    const shapes=icons.map((name,i)=>'<g transform="translate('+ (8+i*52)+' 3) scale(.85)" fill="'+[t.accent,t.pink,t.heading][i]+'" color="'+[t.accent,t.pink,t.heading][i]+'">'+THEME_ICONS[name].replaceAll('BACKGROUND',t.header)+'</g>').join('');
+    return 'url("data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="34" viewBox="0 0 160 34">'+shapes+'</svg>')+'")';
+  }
   function applyTheme(value){
     const key=Object.hasOwn(THEMES,value)?value:'destiny',theme=THEMES[key];if(!panel)return;
     panel.dataset.theme=key;
-    for(const [name,color] of Object.entries(theme))if(name!=='label')panel.style.setProperty('--spa-'+name,color);
+    panel.style.setProperty('--spa-art',themeArtwork(key));
+    const icon=THEME_ICONS[THEME_ART[key][0]].replaceAll('BACKGROUND',theme.accent);
+    panel.style.setProperty('--spa-bubble-art','url("data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><g fill="'+theme.bg+'" color="'+theme.bg+'">'+icon+'</g></svg>')+'")');
+    for(const [name,color] of Object.entries(theme))if(/^#[0-9a-f]{6}$/i.test(color))panel.style.setProperty('--spa-'+name,color);
     const select=panel.querySelector('#spa-theme');if(select)select.value=key;
   }
   const startupIssues=new Set();
@@ -70,8 +167,8 @@
     const key=panel.querySelector('#spa-source')?.value,source={zillow:'Zillow',redfin:'Redfin',realtor:'Realtor.com'}[key];
     if(!source){tell('Select Zillow, Redfin or Realtor.com for automatic checking.');return;}
     const results=sourceResults(savedValue(LISTINGS_KEY,[]),address,Date.now());
-    if(results.some(s=>s.source===source&&s.result)){tell(source+' already verified.');return;}
-    const recentPropertyRequests=propertyJobs();if(recentPropertyRequests.some(j=>j.identity===identity&&j.source===source)){tell(source+' already opened recently.');return;}
+    if(!manual&&results.some(s=>s.source===source&&s.result)){tell(source+' already verified.');return;}
+    const recentPropertyRequests=propertyJobs();if(!manual&&recentPropertyRequests.some(j=>j.identity===identity&&j.source===source&&j.status!=='Tab could not open')){tell(source+' already opened recently. Use Open selected check to reopen.');return;}
     // Limit unattended tab creation across leads, not just on this page.
     if(!manual&&recentPropertyRequests.filter(j=>!j.manual).length>=3){tell('Automatic tab limit reached. Use Open selected check if needed.');return;}
     const token=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
@@ -81,6 +178,11 @@
     catch{updatePropertyJob(token,'Tab could not open');tell(source+' tab could not open.');}
   }
   // Pure functions are also exercised by the local test suite.
+  function homeownerParts(full,first='',last=''){
+    if(clean(first)&&clean(last))return {first:titleCase(first),last:titleCase(last),inferred:false};
+    const parts=clean(full).split(/\s+/).filter(Boolean);
+    return {first:titleCase(parts.length>1?parts.slice(0,-1).join(' '):parts[0]||''),last:titleCase(parts.length>1?parts.at(-1):''),inferred:true};
+  }
   function titleCase(value, address=false) {
     return clean(value).split(' ').map(word=>{
       if (address && /^(?:N|S|E|W|NE|NW|SE|SW|USA|PO|AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|ON|BC|QC|AB|MB|NB|NL|NS|NT|NU|PE|SK|YT)$/i.test(word.replace(/,$/,''))) return word.toUpperCase();
@@ -93,6 +195,24 @@
   }
   function postal(value) { const s=clean(value).toUpperCase(); return /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(s)?s.replace(/\s/g,''):s.replace(/-\d{4}$/,''); }
   function cleanLeadName(value){return clean(value).replace(/\s+[+*]+\s*$/,'').trim();}
+  function distanceFallbackQueries(address){
+    const code=String(address).match(/\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b/i)?.[0];
+    const tail=String(address).split(',').slice(1).join(',');
+    const city=clean(tail.split(/\b(?:ON|Ontario)\b/i)[0]).replace(/[,\s]+$/,'');
+    const result=[];
+    if(code)result.push({precision:'postal',code:postal(code),query:code+', Canada'});
+    if(city&&/\b(?:ON|Ontario)\b/i.test(tail))result.push({precision:'city',city:city.toLowerCase(),query:city+', Ontario, Canada'});
+    return result;
+  }
+  function areaDistanceCandidate(places,fallback){
+    if(!Array.isArray(places))return null;
+    const matches=places.filter(p=>{
+      const a=p?.address;if(a?.country_code!=='ca'||!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lon)))return false;
+      if(fallback.precision==='postal')return postal(a.postcode||'')===fallback.code;
+      return (/^(?:Ontario|ON)$/i.test(a.state||'')||a['ISO3166-2-lvl4']==='CA-ON')&&['city','town','village','municipality','suburb','hamlet','neighbourhood','quarter'].some(k=>clean(a[k]).toLowerCase()===fallback.city)&&/^(?:city|town|village|municipality|administrative|suburb|hamlet|neighbourhood|quarter)$/.test(p.addresstype||'');
+    });
+    return matches.length===1?{place:matches[0],precision:fallback.precision}:null;
+  }
   function geocodeMatches(place,address){
     const a=place?.address;if(!a?.house_number||!a.road||!a.postcode)return false;
     const geocoded=clean(a.house_number)+' '+clean(a.road)+', '+clean(a.postcode);
@@ -257,14 +377,61 @@
     const wanted=listingIdentity(expected),found=listingIdentity(actual);
     return !!wanted&&!!found&&wanted!==found;
   }
+  // Made by Montana. History extraction adapted from our Not Home Guard.
+  function historyResults(rows){
+    const unique=rows.filter((r,i,all)=>all.findIndex(o=>o.dateText===r.dateText&&o.history===r.history&&o.doneBy===r.doneBy)===i);
+    return {loadedCount:unique.length,rows:unique.filter(r=>/^(?:not\s+home|no\s+demo|demo\s+no\s+sale|dns|sale|cancelled\s+sale|canceled\s+sale)$/i.test(clean(r.history))),notHomes:unique.filter(r=>/^not\s+home$/i.test(clean(r.history))),noDemos:unique.filter(r=>/^no\s+demo$/i.test(clean(r.history))),demoNoSales:unique.filter(r=>/^(?:demo\s+no\s+sale|dns)$/i.test(clean(r.history))),sales:unique.filter(r=>/^sale$/i.test(clean(r.history))),cancelledSales:unique.filter(r=>/^cancel(?:led|ed)\s+sale$/i.test(clean(r.history)))};
+  }
+  function historyGuidance(results){
+    const notes=[];
+    if(results.notHomes.length>=2)notes.push('STOP — 2+ Not Homes: do not message-confirm. Contact Confirm Leaders in Cutting Edge before proceeding. Call the homeowner and review the result notes; a call alone does not replace leader review.');
+    else if(results.notHomes.length)notes.push('1 Not Home: verify setter/source eligibility, including proxy restrictions. Under the saved confirmation guide, same-day/next-day may use message confirmation; two or more days out requires Reply C or live confirmation. Source-specific rules still apply.');
+    if(results.notHomes.length>=2)notes.push('Rep Getting No Answer / reschedule replies only: with 2+ prior Not Homes, do not offer a reschedule; follow the Not Home Reply Guide and Andersen referral instructions. This is separate from confirmation leader review.');
+    if(results.noDemos.length)notes.push('No Demo: read every No Demo result note. Address each red flag with the homeowner before confirming; do not assume a new appointment resolves the previous issue. If the notes are unclear, ask a leader.');
+    if(results.demoNoSales.length>=2)notes.push('2+ Demo No Sales: do not message-confirm. Speak with the homeowner and establish whether this is the same project and when it was quoted.');
+    else if(results.demoNoSales.length)notes.push('Demo No Sale: verify the project and prior quote date before confirming.');
+    if(results.demoNoSales.length>=2&&results.notHomes.length)notes.push('Price-increase review (saved Not Home tool guidance): multiple Demo No Sales plus a Not Home. Check whether this is the same project and verify the actual quote date. Same-project quote over one year old: have the price-increase conversation before confirming. Within one year: follow the sales-rep or sales-manager escalation process. Unknown date, exactly one year, different project, or conflicting instructions: ask a leader. History-entry dates and result counts do not establish quote age.');
+    if(results.cancelledSales?.length)notes.push('Cancelled Sale: review the cancellation reason and project status in Appointment History. Check current company guidance or a leader before proceeding; this result is not an appointment cancellation.');
+    if(results.sales?.length)notes.push('Sale: review the sold project and current status before discussing a new appointment. A prior sale alone is not a do-not-confirm rule.');
+    return notes;
+  }
+  function openOriginalHistory(){
+    const pill=document.getElementById('leadHistoryPill'),popup=document.getElementById('leadHistoryPopup');
+    if(!pill){notice('Optional Appointment History tool not detected. This tool reads history independently; use the list here and original lead notes.');return;}
+    if(!popup||popup.getClientRects().length===0)pill.click();
+  }
+  function readAppointmentHistory(){
+    const rows=[...document.querySelectorAll('.history tr')].map(row=>{
+      const date=row.querySelector('.datecolumn'),result=row.querySelector('.historycolumn'),by=row.querySelector('.donebycolumn');
+      return date&&result&&by?{dateText:clean(date.textContent),history:clean(result.textContent),doneBy:clean(by.textContent)}:null;
+    }).filter(Boolean);
+    return historyResults(rows);
+  }
+  function refreshHistory(){
+    if(!panel||!lead)return;
+    const box=panel.querySelector('#spa-history');if(!box)return;
+    const result=readAppointmentHistory(),fingerprint=JSON.stringify([lead.id,result]);
+    setHistoryAlarm(result.rows.length?JSON.stringify([lead.id,result.rows]):'');
+    if(box.dataset.history===fingerprint)return;box.dataset.history=fingerprint;
+    const total=result.rows.length;
+    let bubble=panel.querySelector('#spa-history-bubble');if(!bubble){bubble=document.createElement('button');bubble.id='spa-history-bubble';bubble.type='button';panel.querySelector('.spa-heading').append(bubble);}
+    bubble.hidden=!total;bubble.textContent='History review · '+total;bubble.setAttribute('aria-label',total+' appointment result flags. Open history review');
+    bubble.onclick=()=>{if(panel.dataset.mini==='true')panel.querySelector('[data-action=mini]').click();const section=panel.querySelector('#spa-history')?.closest('details');if(section)section.open=true;panel.querySelector('#spa-history')?.scrollIntoView({block:'nearest'});};
+    const summary=result.loadedCount?`${result.notHomes.length} Not Home · ${result.noDemos.length} No Demo · ${result.demoNoSales.length} Demo No Sale · ${result.cancelledSales.length} Cancelled Sale · ${result.sales.length} Sale`:'History unavailable or no readable rows. Review the original history; this is not clearance.';
+    box.innerHTML='<p><strong>'+esc(summary)+'</strong></p><div class="spa-history-scroll" role="region" aria-label="History issues and guidance" tabindex="0">'+
+      historyGuidance(result).map(text=>'<p class="status">'+esc(text)+'</p>').join('')+
+      (result.rows.length?'<small>Read directly from this lead. Dates are history-entry dates; full result notes remain in the original lead history.</small>'+result.rows.map(r=>'<p class="status"><strong>'+esc(r.history)+'</strong><br>'+esc(r.dateText)+'<br><small>'+esc(r.doneBy)+'</small></p>').join(''):result.loadedCount?'<p>No matching outcomes in the readable history. This is not confirmation clearance.</p>':'<p>Waiting for readable history on the lead.</p>')+
+      '</div><details><summary>Guidance sources</summary><small>Based on the saved company guidance reviewed September 8, 2026 and your Not Home tool. Open the current guides if instructions have changed; unresolved cases need leader review.</small><div class="row"><a href="https://confirmdailycalender.netlify.app/not-home-guide" target="_blank" rel="noopener noreferrer">Not Home confirmation guide</a><a href="https://confirmdailycalender.netlify.app/not-home-reply-guide" target="_blank" rel="noopener noreferrer">Not Home reply guide</a></div></details><button type="button" data-open-history>Open Appointment History tool (optional)</button>';
+    box.onclick=e=>{if(e.target.closest?.('[data-open-history]'))openOriginalHistory();};
+  }
   function headerSummary(current,distance) {
     const km=distance?.km;
     const types=[...new Set((current.listingTypes||[]).map(propertyLabel).filter(Boolean))];
     const label=types.length>1?'Property types differ':types[0]||current.type||'Property type unverified';
     const property=types.length?titleCase(label):current.type?titleCase(label)+' (lead only)':label;
     return {title:canadianLead(current)?'Canada · '+(Number.isFinite(km)?km.toFixed(1)+' km':distance?.error?'unavailable':'checking…'):titleCase(current.name)||'Property Assistant',
-      detail:canadianLead(current)?(Number.isFinite(km)?distance.precision==='street'?'Street estimate · Verify route':(distance.estimated?'Estimated drive':'Maps distance')+(gtaMarket(current.region)?' · '+(km>150?'Above Central cutoff':km>147?'Near Central cutoff':'Below Central cutoff'):' · From Mississauga'):distance?.error?'Lookup unavailable':'Checking distance…'):[current.region||'Region unknown',property].join(' · '),
-      over:canadianLead(current)&&gtaMarket(current.region)&&Number.isFinite(km)&&km>150&&distance.precision!=='street'};
+      detail:canadianLead(current)?(Number.isFinite(km)?['street','postal','city'].includes(distance.precision)?(distance.precision==='street'?'Street estimate · Verify route':distance.precision==='postal'?'Postal-area estimate · Verify house':'City-area estimate · Verify house'):(distance.estimated?'Estimated drive':'Maps distance')+(gtaMarket(current.region)?' · '+(km>150?'Above Central cutoff':km>147?'Near Central cutoff':'Below Central cutoff'):' · From Mississauga'):distance?.error?'Lookup unavailable':'Checking distance…'):[current.region||'Region unknown',property].join(' · '),
+      over:canadianLead(current)&&gtaMarket(current.region)&&Number.isFinite(km)&&km>150&&!['street','postal','city'].includes(distance.precision)};
   }
   function distanceStatus(km) { return !Number.isFinite(km)||km<0?'unknown':km>150?'over':km>147?'near':'within'; }
   function typeComparison(a,b) {
@@ -291,6 +458,43 @@
   }
   let panel,identity='',generation=0,controller,lead,windowSync=false,saveTimer,scanTimer;
   const distances=new Map();
+  const HISTORY_SOUND_KEY='sixx-property-history-sound-v1';
+  let historyAlarmKey='',historyAcknowledged='',historySoundTimer=null,historyAudio=null,historyTone=null;
+  function historySoundEnabled(){return savedValue(HISTORY_SOUND_KEY,false)===true;}
+  function historySoundAllowed(){return !!historyAlarmKey&&historyAlarmKey!==historyAcknowledged&&historySoundEnabled()&&!document.hidden&&document.hasFocus();}
+  function stopHistorySound(){
+    if(historySoundTimer!==null){clearInterval(historySoundTimer);historySoundTimer=null;}
+    if(historyTone){try{historyTone.stop();}catch{}historyTone=null;}
+  }
+  function historyBeep(){
+    if(!historySoundAllowed()){stopHistorySound();return;}
+    if(!historyAudio||historyAudio.state!=='running')return;
+    try{const tone=historyAudio.createOscillator(),volume=historyAudio.createGain(),now=historyAudio.currentTime;
+      tone.type='sine';tone.frequency.value=660;volume.gain.setValueAtTime(0,now);volume.gain.linearRampToValueAtTime(.08,now+.02);volume.gain.linearRampToValueAtTime(0,now+.3);
+      tone.connect(volume);volume.connect(historyAudio.destination);historyTone=tone;tone.onended=()=>{tone.disconnect();volume.disconnect();if(historyTone===tone)historyTone=null;};tone.start();tone.stop(now+.32);
+    }catch{stopHistorySound();}
+  }
+  function updateHistorySound(){
+    const mute=panel?.querySelector('#spa-history-sound'),ack=panel?.querySelector('#spa-history-ack');
+    const audioStatus=panel?.querySelector('#spa-audio-status');
+    if(audioStatus)audioStatus.textContent=!historySoundEnabled()?'Sound off':!historyAlarmKey?'Sound on · No history flags':historyAlarmKey===historyAcknowledged?'Current alert acknowledged':document.hidden||!document.hasFocus()?'Sound paused · Tab inactive':historyAudio?.state!=='running'?'Sound on · Click here to unlock audio':'Sound on · History alert active';
+    if(mute){mute.textContent=historySoundEnabled()?'Mute sound':'Enable sound';mute.setAttribute('aria-pressed',String(historySoundEnabled()));mute.title=historySoundEnabled()&&historyAudio?.state!=='running'?'Click the page once to enable browser audio':'Sound preference is remembered across leads';}
+    if(ack){ack.hidden=!historyAlarmKey;ack.disabled=historyAlarmKey===historyAcknowledged;ack.textContent=ack.disabled?'Acknowledged':'Acknowledge';}
+    if(!historySoundAllowed()){stopHistorySound();return;}
+    if(historySoundTimer===null){historyBeep();historySoundTimer=setInterval(historyBeep,2500);}
+  }
+  function setHistoryAlarm(key){if(key!==historyAlarmKey){stopHistorySound();historyAlarmKey=key;historyAcknowledged='';}updateHistorySound();}
+  async function unlockHistorySound(){
+    if(!historySoundEnabled()||document.hidden||!document.hasFocus())return;
+    try{const Context=window.AudioContext||window.webkitAudioContext;if(!Context){if(panel)notice('This browser does not provide audio playback. Visual warnings remain active.');return;}
+      const wasRunning=historyAudio?.state==='running';
+      if(!historyAudio)historyAudio=new Context();if(historyAudio.state==='suspended')await historyAudio.resume();
+      // An existing timer may have ticked before the browser unlocked audio.
+      // Restart once on unlock so the first audible beep is immediate, not silently delayed.
+      if(!wasRunning&&historyAudio.state==='running')stopHistorySound();
+      updateHistorySound();
+    }catch{if(panel)notice('Audio unavailable. Visual history warnings remain active.');}
+  }
   let listingType='';
   let matchedListing=null;
   let matchedListings=[];
@@ -314,7 +518,7 @@
     const consultant=summaryConsultant||(validCalendarAssignment(calendarRecord,id,Date.now())?calendarRecord.name:'');
     const region=[...new Set(['.lead-attribute.sales-region','.lead-attribute.store','#selectedstorename','input[name="SalesRegion"]','input[name="Territory"]'].map(s=>read([s])).filter(Boolean))].join(' | ');
     const nameText=cleanLeadName(first&&last?first+' '+last:name);
-    return {id,name:nameText,consultant,consultantSource:summaryConsultant?'lead summary':'selected calendar appointment',lastName:cleanLeadName(last)||nameText.split(/\s+/).at(-1)||'',street,cityLine,zip,rawRegion:region,region:effectiveRegion(region),
+    return {id,name:nameText,nameParts:homeownerParts(nameText,first,last),consultant,consultantSource:summaryConsultant?'lead summary':'selected calendar appointment',lastName:cleanLeadName(last)||nameText.split(/\s+/).at(-1)||'',street,cityLine,zip,rawRegion:region,region:effectiveRegion(region),
       phones:['.homephonelabel','.cellphonelabel','.workphonelabel'].map(s=>phone(read([s]))).filter(Boolean),
       type:dwelling||read(['input[name="PropertyType"]','.lead-attribute.property-type'])||assessmentPropertyType(notes),condoHint:condoSignal(notes),...physicalAddress(street,cityLine,notes)};
   }
@@ -389,18 +593,186 @@
     #${ID}[data-theme] #spa-stop{color:var(--spa-danger)}#${ID}[data-theme][data-over=true] header{border-bottom-color:var(--spa-danger)}
     #${ID}[data-theme] #spa-territory-warning,#${ID}[data-theme] #spa-unit-badge{color:var(--spa-warning);border-color:var(--spa-border)}
     #${ID}[data-theme] footer{background:var(--spa-field);color:var(--spa-muted);border-color:var(--spa-border);flex-wrap:wrap}
+    #${ID} .spa-audio-settings{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
+    #${ID} .spa-audio-settings button{font-size:11px;padding:3px 6px}
+    #${ID} .spa-history-scroll{max-height:220px;max-height:min(220px,35vh);overflow-y:scroll;min-height:0;overscroll-behavior:contain;scrollbar-gutter:stable;padding:4px 6px 4px 0;overflow-wrap:anywhere}
+    #${ID} .spa-history-scroll:focus-visible{outline:2px solid var(--spa-accent,#77e6ee);outline-offset:2px}
+    #${ID} #spa-audio-status{flex-basis:100%;font-size:11px;cursor:pointer}
+    #${ID} #spa-history-bubble{display:block;max-width:100%;white-space:normal;border-radius:16px;margin-top:5px;padding:4px 9px;background:var(--spa-button);color:var(--spa-text);border:1px solid var(--spa-pink);font-size:11px;animation:spa-history-flash 2.4s ease-in-out infinite}
+    #${ID} #spa-history-bubble[hidden]{display:none}
+    @keyframes spa-history-flash{50%{background:var(--spa-hover);box-shadow:0 0 0 2px var(--spa-danger)}}
+    @media(prefers-reduced-motion:reduce){#${ID} #spa-history-bubble{animation:none}}
     #${ID} #spa-theme{width:auto;max-width:140px;font:inherit;min-height:28px;padding:3px}
     #${ID}[data-theme] main{scrollbar-color:var(--spa-border) var(--spa-bg)}#${ID}[data-theme] main::-webkit-scrollbar-thumb{background:var(--spa-border);border-color:var(--spa-bg)}
     #${ID}[data-theme] :focus-visible{outline-color:var(--spa-accent)}
+    /* Made by Montana. Reflow controls, not text size, when the tool is resized. */
+    #${ID}{container-type:inline-size;min-width:min(220px,calc(100vw - 12px));min-height:min(240px,calc(100vh - 12px))}
+    #${ID} header{max-height:40%;overflow-y:auto;overflow-wrap:anywhere;align-items:flex-start}
+    #${ID} main{min-height:45px;min-width:0}
+    #${ID} footer{max-height:32%;overflow-y:auto;min-height:0}
+    #${ID} .row>*{flex:1 1 110px;max-width:100%}
+    #${ID} button,#${ID} a,#${ID} summary{white-space:normal;overflow-wrap:anywhere}
+    #${ID} .spa-history-scroll{scrollbar-color:var(--spa-border) var(--spa-bg)}
+    #${ID}[data-mini=true]{min-height:0}
+    #${ID}[data-mini=true] header{max-height:none}
+    /* Dedicated artwork ribbon stays below the heading, never over labels or inputs. */
+    #${ID}[data-theme] header{padding-bottom:43px;min-height:95px}
+    #${ID}[data-theme] header:before{display:none}
+    #${ID}[data-theme] header:after{height:34px;bottom:3px;background-image:var(--spa-art);background-repeat:repeat-x;background-size:160px 34px;pointer-events:none;opacity:.85}
+    #${ID}[data-mini=true] header{padding-bottom:34px;min-height:70px}
+    #${ID}[data-mini=true] header:after{height:26px;background-size:125px 26px}
+    #${ID} #spa-quick-bubble{display:none}
+    #${ID} #spa-settings{width:100%;margin:0}
+    #${ID} #spa-settings>summary{font-size:12px;font-weight:600;padding:5px;min-height:28px}
+    #${ID} .spa-settings-body{display:flex;flex-direction:column;gap:8px;padding:6px 0}
+    #${ID} .spa-settings-body input[type=checkbox]{width:auto;min-height:0;margin-right:5px}
+    #${ID} .spa-settings-body #spa-theme{display:block;width:100%;max-width:100%;margin-top:4px}
+    #${ID} .spa-freshness{margin-top:6px;line-height:1.5}
+    #${ID} .spa-section-flag{flex:none;font-size:10px;padding:2px 5px;border:1px solid currentColor;border-radius:5px;margin-left:auto}
+    #${ID}[data-theme] .spa-section[data-attention=red] .spa-section-flag{color:var(--spa-danger)}
+    #${ID}[data-theme] .spa-section[data-attention=amber] .spa-section-flag{color:var(--spa-warning)}
+    #${ID} .spa-section-flag:before,#${ID} #spa-history-bubble:before,#${ID} .spa-stop:before{content:'';display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;background:currentColor;vertical-align:middle;animation:spa-notification-dot 2s ease-in-out infinite;pointer-events:none}
+    @keyframes spa-notification-dot{0%,100%{opacity:1}50%{opacity:.25}}
+    #${ID}[data-bubble=true]{width:56px!important;height:56px!important;min-width:56px;min-height:56px;overflow:visible;resize:none;border-radius:50%;border:0;background:transparent;box-shadow:none}
+    #${ID}[data-bubble=true] header,#${ID}[data-bubble=true] main,#${ID}[data-bubble=true] footer{display:none}
+    #${ID}[data-bubble=true] #spa-quick-bubble{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;width:56px;height:56px;padding:13px 3px 3px;border-radius:50%;background:linear-gradient(140deg,var(--spa-accent),var(--spa-heading));color:var(--spa-bg);border:2px solid var(--spa-pink);box-shadow:0 3px 12px #0005;touch-action:none;cursor:grab;user-select:none}
+    #${ID}[data-bubble=true] #spa-quick-bubble:before{content:'';position:absolute;top:3px;left:21px;width:11px;height:11px;background:var(--spa-bubble-art) center/contain no-repeat;pointer-events:none}
+    #${ID}[data-bubble=true] #spa-quick-bubble strong{font-size:15px;line-height:1.2;color:var(--spa-bg)}
+    #${ID}[data-bubble=true] #spa-quick-bubble small{font-size:9px;line-height:1.2;color:var(--spa-bg)}
+    #${ID} .spa-quick-count{position:absolute;right:-3px;top:-3px;min-width:18px;padding:1px 3px;border-radius:10px;background:var(--spa-dangerBg);color:var(--spa-danger);border:1px solid var(--spa-danger);font-size:10px}
+    #${ID} #spa-quick-bubble[data-tone=alert]{border-color:var(--spa-danger);animation:spa-quick-pulse 2.4s ease-in-out infinite}
+    @keyframes spa-quick-pulse{0%,100%{box-shadow:0 0 0 2px var(--spa-danger)}45%,65%{box-shadow:0 0 0 7px var(--spa-danger),0 0 20px 7px var(--spa-danger);transform:scale(1.07)}}
+    #${ID}[data-bubble=true] #spa-quick-bubble[data-tone=alert]{animation-duration:1.8s}
+    #${ID} #spa-history-bubble{animation:none;border-width:1px}
+    #${ID} #spa-history-bubble:before{color:var(--spa-danger)}
+    #${ID} .spa-stop{animation:none;padding:3px 5px;border-radius:4px}
+    @media(prefers-reduced-motion:reduce){#${ID} .spa-section-flag:before,#${ID} #spa-history-bubble:before,#${ID} .spa-stop:before{animation:none;opacity:1}}
+    @media(prefers-reduced-motion:reduce){#${ID} #spa-quick-bubble[data-tone=alert]{animation:none}}
+    @container (max-width:360px){
+      #${ID} main,#${ID} .spa-section-body{padding:7px}
+      #${ID} .row{flex-direction:column}
+      #${ID} .row>*{flex:auto;width:100%}
+      #${ID} .spa-section>summary{padding:8px}
+      #${ID} footer{gap:5px;padding:6px}
+      #${ID} footer>span{flex:1 0 100%;min-width:0}
+      #${ID} footer>button{flex:1 0 100%}
+      #${ID} #spa-theme{width:100%;max-width:100%;flex:1 0 100%}
+    }
     `;(document.head||document.documentElement).append(style);
   }
   function clamp(){const r=panel.getBoundingClientRect();panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
-  function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,minimized}));}catch{}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);panel.dataset.mini=String(s.minimized===true);panel.style.right='auto';miniLabel();clamp();}catch{}}
+  function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,minimized,bubble:panel.dataset.bubble==='true'}));}catch{}}
+  function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);panel.dataset.bubble=String(s.bubble===true);panel.dataset.mini=String(s.minimized===true||s.bubble===true);panel.style.right='auto';miniLabel();clamp();}catch{}}
+  function setPanelMode(mode){
+    const r=panel.getBoundingClientRect();if(panel.dataset.mini!=='true'){panel.dataset.w=String(r.width);panel.dataset.h=String(r.height);}
+    panel.dataset.bubble=String(mode==='bubble');panel.dataset.mini=String(mode!=='full');
+    if(mode==='full'){panel.style.width=(Number(panel.dataset.w)||320)+'px';panel.style.height=(Number(panel.dataset.h)||480)+'px';}
+    miniLabel();clamp();save();updateQuickBubble();
+  }
+  function quickBubbleState(current,history,distance,mobile){
+    const count=history.rows.length,canada=current&&canadianLead(current),km=distance?.km;
+    const label=mobile?'MH':canada&&Number.isFinite(km)?String(Math.round(km)):count?'H'+count:canada&&!distance?.error?'…':'?';
+    return {label,count,tone:mobile||count?'alert':'review',unit:!mobile&&canada&&Number.isFinite(km)?'km est.':mobile?'review':count?'history':'review',target:mobile?'spa-extracted':count?'spa-history':canada?'spa-km':'spa-extracted'};
+  }
+  function updateQuickBubble(){
+    const button=panel?.querySelector('#spa-quick-bubble');if(!button)return;
+    const history=lead?readAppointmentHistory():{rows:[]};
+    const mobile=!!lead&&(manufacturedType(lead.type)||manufacturedType(listingType)||matchedListings.some(r=>manufacturedType(r.type+' '+r.style)));
+    const state=quickBubbleState(lead,history,lead?distances.get(distanceKey()):null,mobile);
+    const guidance=lead?historyGuidance(history).join(' '):'';
+    const summary=[lead?.name||'Waiting for lead',lead?.region||'',mobile?'Mobile/manufactured home: review required':'',history.rows.length+' history results needing review',guidance,panel.querySelector('#spa-title')?.textContent||'',panel.querySelector('#spa-subtitle')?.textContent||'','Open details. This indicator is not confirmation clearance.'].filter(Boolean).join(' · ');
+    button.dataset.tone=state.tone;button.dataset.target=state.target;
+    button.title=summary;button.setAttribute('aria-label',summary);
+    button.innerHTML='<strong>'+esc(state.label)+'</strong><small>'+esc(state.unit)+'</small>'+(state.count?'<span class="spa-quick-count">'+Math.min(state.count,99)+(state.count>99?'+':'')+'</span>':'');
+  }
+  function freshnessLabel(readAt,now=Date.now()){
+    if(!Number.isFinite(readAt)||readAt>now)return 'Not verified';
+    const age=Math.floor((now-readAt)/60000);
+    return age===0?'Checked just now':age<15?'Checked '+age+' min ago':'Older result · Verify again';
+  }
+  // Made by Montana. Review is session-only, never eligibility clearance or a company-record edit.
+  let reviewedWorkflowKey='';
+  function workflowItems(history,mobileEvidence,route,isCanada,property){
+    const items=[];
+    const add=(kind,title,text,target,evidence)=>items.push({kind,title,text,target,evidence});
+    if(mobileEvidence.length)add('warning','Mobile / manufactured home detected','Review the property source and applicable policy before proceeding. Conflicting sources need manual verification.','spa-extracted',mobileEvidence.join(' · '));
+    if(history.notHomes.length>=2)add('warning','2+ Not Homes: leader review','Do not message-confirm. Contact Confirm Leaders in Cutting Edge before proceeding; review the notes and call the homeowner.','spa-history',history.notHomes.map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(history.demoNoSales.length>=2&&history.notHomes.length)add('warning','Price-increase review','Check the same-project quote date. Over one year: price-increase conversation. Within one year: sales-rep/manager escalation. Unclear cases need a leader.','spa-history',history.demoNoSales.concat(history.notHomes).map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(history.demoNoSales.length>=2)add('warning','2+ Demo No Sales: speak with homeowner','Do not message-confirm. Establish whether this is the same project and when it was quoted.','spa-history',history.demoNoSales.map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(history.noDemos.length)add('warning','No Demo: resolve prior issues','Read every No Demo result note and address the red flags with the homeowner before confirming.','spa-history',history.noDemos.map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(history.notHomes.length===1)add('review','1 Not Home: check timing and source','Same/next day may qualify for message confirmation; 2+ days needs Reply C or live confirmation. Source/proxy restrictions still apply.','spa-history',history.notHomes.map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(history.demoNoSales.length===1)add('review','Demo No Sale: check prior quote','Verify the project and actual quote date before confirming.','spa-history',history.demoNoSales.map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(history.cancelledSales.length)add('review','Cancelled Sale: review reason','Review cancellation reason, current project status and leader guidance. This is not an appointment cancellation.','spa-history',history.cancelledSales.map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(history.sales.length)add('review','Prior Sale: review project','Check the sold project and current status before discussing another appointment. A prior sale alone is not a disqualification.','spa-history',history.sales.map(r=>r.history+' · '+r.dateText).join('\n'));
+    if(isCanada){
+      if(!Number.isFinite(route?.km))add('unknown','Distance not verified','Wait for the lookup or use Verify in Maps. Missing results do not mean the lead is within territory.','spa-distance',route?.error?'Distance service returned no usable result.':'Distance lookup has no result yet.');
+      else if(['postal','city','street'].includes(route.precision))add('unknown','Approximate distance: verify the house','This is an area estimate, not the house route. Verify before deciding the 150 km Central GTA cutoff.','spa-distance',route.km.toFixed(1)+' km · '+route.precision+' estimate');
+      else if(route.km>147)add('review','Distance near / above Central cutoff','Verify the actual route and territory. The 150 km hard cutoff is Central GTA only; estimates may include tolls.','spa-distance',route.km.toFixed(1)+' km · '+(route.estimated?'estimated drive':'entered or Maps distance'));
+    }
+    if(property?.warning)add('review','Property details disagree','Open the source details and resolve the conflicting property descriptions.','spa-extracted',property.warning);
+    else if(!property||/unavailable|checking|unverified/i.test(property.label||''))add('unknown','Property type not verified','A blocked or missing website result is not a property-type finding. Use the selected website check if needed.','spa-extracted',property?.label||'No matched listing result yet.');
+    if(!history.loadedCount)add('unknown','History unavailable','Review the original history. No readable rows is not confirmation clearance.','spa-history','No readable appointment-history rows.');
+    return items;
+  }
+  function historyReviewCopy(history){
+    return ['Appointment history review',history.rows.length?history.rows.map(r=>r.history+' | '+r.dateText).join('\n'):'No matching outcomes in readable history; verify the original history.','Dates above are history-entry dates, not verified quote dates.','Guidance:',...historyGuidance(history),'Review original result notes. This summary does not authorize confirmation.'].join('\n');
+  }
+  function refreshWorkflow(){
+    if(!panel||!lead)return;
+    const main=panel.querySelector('main');if(!main)return;
+    const history=readAppointmentHistory(),evidence=[];
+    if(manufacturedType(lead.type))evidence.push('Enabled+ property field: '+lead.type);
+    if(manufacturedType(listingType))evidence.push('Manually compared type: '+listingType);
+    for(const r of matchedListings)if(manufacturedType(r.type+' '+r.style))evidence.push(r.source+': '+r.type+(r.style?' / '+r.style:''));
+    const items=workflowItems(history,evidence,distances.get(distanceKey()),canadianLead(lead),lead.propertyCheck);
+    const key=JSON.stringify([lead.id,history.rows,items]);
+    let box=panel.querySelector('#spa-workflow');if(!box){box=document.createElement('section');box.id='spa-workflow';const distanceSection=main.querySelector('#spa-distance')?.closest('section');if(distanceSection)distanceSection.after(box);else main.prepend(box);}
+    updateSectionFlags(items);
+    const reviewed=key===reviewedWorkflowKey,fingerprint=key+reviewed;
+    if(box.dataset.fingerprint===fingerprint)return;
+    const wasOpen=box.querySelector('details')?.open;box.dataset.fingerprint=fingerprint;
+    const top=items[0],warnings=items.filter(i=>i.kind==='warning').length,unknowns=items.filter(i=>i.kind==='unknown').length;
+    box.innerHTML='<div class="spa-section-body"><strong>Next action'+(top?' · '+esc(top.title):'')+'</strong><p>'+esc(top?.text||'No listed review flags. Continue the script and required checks; this is not automatic clearance.')+'</p><small>'+warnings+' warning(s) · '+items.filter(i=>i.kind==='review').length+' review(s) · '+unknowns+' unverified check(s)'+(reviewed?' · Reviewed this session':'')+'</small><details'+(wasOpen?' open':'')+'><summary>Review details ('+items.length+')</summary><div class="spa-history-scroll" tabindex="0" role="region" aria-label="Prioritized issues and evidence">'+items.map((item,i)=>'<div class="status" data-tone="'+(item.kind==='warning'?'red':'')+'"><strong>'+esc(item.kind==='unknown'?'NOT VERIFIED':item.kind==='warning'?'WARNING':'REVIEW')+': '+esc(item.title)+'</strong><p>'+esc(item.text)+'</p><details><summary>Why this is flagged</summary><p style="white-space:pre-line">'+esc(item.evidence)+'</p></details><button type="button" data-workflow-open="'+i+'">Open relevant details</button></div>').join('')+'</div></details><div class="row"><button type="button" data-workflow-copy>Copy history summary</button>'+(items.length?'<button type="button" data-workflow-review>'+ (reviewed?'Undo reviewed':'Mark these reviewed')+'</button>':'')+'</div><small>Reviewed does not clear a warning, mute sound, or approve confirmation. Refresh reminds you again.</small></div>';
+    box.onclick=e=>{
+      const open=e.target.closest?.('[data-workflow-open]');if(open){const item=items[Number(open.dataset.workflowOpen)];if(!item)return;const target=panel.querySelector('#'+item.target);const section=target?.closest('details');if(section)section.open=true;target?.scrollIntoView({block:'nearest'});}
+      if(e.target.closest?.('[data-workflow-copy]'))copy(historyReviewCopy(readAppointmentHistory()));
+      if(e.target.closest?.('[data-workflow-review]')){reviewedWorkflowKey=reviewed?'':key;refreshWorkflow();}
+    };
+  }
+  function updateSectionFlags(items){
+    const targets={distance:'spa-distance',history:'spa-history',property:'spa-extracted'};
+    for(const section of panel.querySelectorAll('details.spa-section')){
+      const key=section.dataset.section,related=items.filter(i=>i.target===targets[key]);
+      let count=related.length,tone=related.some(i=>i.kind==='warning')?'red':'amber';
+      if(key==='duplicates'){const box=panel.querySelector('#spa-dupes');count=box?.querySelectorAll('a[href*="Lead?L="]').length||0;if(!count&&/unavailable/i.test(box?.textContent||''))count=1;}
+      if(key==='copy')count=['spa-name','spa-address'].filter(id=>!clean(panel.querySelector('#'+id)?.value)).length;
+      const summary=section.querySelector(':scope > summary');if(!summary)continue;
+      section.dataset.attention=count?tone:'';
+      let tag=summary.querySelector('.spa-section-flag');
+      if(count){if(!tag){tag=document.createElement('span');tag.className='spa-section-flag';summary.append(tag);}const text=(tone==='red'?'! ':'Review ')+count;if(tag.textContent!==text)tag.textContent=text;tag.title='Open this section to review flagged or unverified information';}
+      else tag?.remove();
+    }
+  }
+  function refreshCheckFreshness(){
+    if(!panel||!lead)return;
+    const route=distances.get(distanceKey());
+    for(const [id,text] of [['spa-distance',route?.error?'Distance check unavailable':freshnessLabel(route?.readAt)],['spa-extracted',['Zillow','Redfin','Realtor.com'].map(source=>{const r=matchedListings.find(r=>r.source===source);return source+': '+freshnessLabel(r?.readAt);}).join(' · ')]]){
+      const box=panel.querySelector('#'+id);if(!box)continue;
+      let label=box.querySelector('.spa-freshness');if(!label){label=document.createElement('small');label.className='spa-freshness';box.append(label);}if(label.textContent!==text)label.textContent=text;
+    }
+  }
+  function snapBubbleToEdge(){
+    if(panel.dataset.bubble!=='true'||!savedValue('sixx-property-edge-snap-v1',false))return;
+    const r=panel.getBoundingClientRect();if(r.left<40)panel.style.left='6px';else if(innerWidth-r.right<40)panel.style.left=Math.max(6,innerWidth-r.width-6)+'px';clamp();
+  }
+  function safeIssueReport(){
+    // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
+    return ['Property Assistant v0.7.16','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+  }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
   function notice(text){panel.querySelector('#spa-notice').textContent=text;}
-  function resetLayout(){panel.dataset.mini='false';panel.dataset.w='320';panel.dataset.h='480';panel.style.width='320px';panel.style.height='480px';panel.style.left=Math.max(6,innerWidth-336)+'px';panel.style.top=Math.min(88,Math.max(6,innerHeight-492))+'px';miniLabel();clamp();save();notice('Layout reset. Your results are unchanged.');}
+  function resetLayout(){panel.dataset.bubble='false';panel.dataset.mini='false';panel.dataset.w='320';panel.dataset.h='480';panel.style.width='320px';panel.style.height='480px';panel.style.left=Math.max(6,innerWidth-336)+'px';panel.style.top=Math.min(88,Math.max(6,innerHeight-492))+'px';miniLabel();clamp();save();notice('Layout reset. Your results are unchanged.');}
   function refreshRoute(){
     if(!panel||!lead||!canadianLead(lead))return;
     const field=panel.querySelector('#spa-km');if(!field)return;
@@ -428,8 +800,10 @@
     if(distances.get(key)&&!distances.get(key).estimated)return;
     const valid=()=>panel?.isConnected&&lead.id===leadId&&distanceKey()===key&&clean(panel.querySelector('#spa-address')?.value)===address;
     const cachedEstimate=estimateRequests.get(address);
-    if(cachedEstimate?.failed&&cachedEstimate.retryAt>Date.now())return;
-    if(cachedEstimate?.failed&&!cachedEstimate.retryAt)return;
+    if(cachedEstimate?.failed&&(cachedEstimate.retryAt>Date.now()||!cachedEstimate.retryAt)){
+      distances.set(key,{estimated:true,error:true});box.textContent='Distance unavailable.'+(cachedEstimate.retryAt?' Retrying automatically.':' See details or verify in Maps.');
+      const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=cachedEstimate.error||'Previous lookup failed. Use Retry checks.';updateHeader();return;
+    }
     const attempts=(cachedEstimate?.attempts||0)+(cachedEstimate?.failed?1:0);
     if(cachedEstimate?.failed&&cachedEstimate.retryAt<=Date.now())estimateRequests.delete(address);
     if(cachedEstimate&&Date.now()-cachedEstimate.started>=LISTING_TTL)estimateRequests.delete(address);
@@ -440,11 +814,19 @@
         const places=await estimateJson('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ca&limit=5&q='+encodeURIComponent(address+', Canada'));
         // A first search hit can be a road or a neighbourhood, not the house.
         // Consider the bounded result set, but never route to a nonmatching hit.
-        const match=distanceCandidate(places,address),p=match?.place,lat=Number(p?.lat),lon=Number(p?.lon);
-        if(Array.isArray(places)&&places.length&&!p)throw Error('Map results did not match the house or an unambiguous street in the same city; the lead address may still be valid');
-        if(!p||!Number.isFinite(lat)||!Number.isFinite(lon)||lat<41||lat>84||lon< -141||lon> -52)throw Error('Address not located');
-        // Do not silently substitute a postal-code centre for the homeowner address.
-        // Street-level matches are explicitly labelled and never treated as house verification.
+        let match=distanceCandidate(places,address);
+        if(!match){
+          for(const fallback of distanceFallbackQueries(address)){
+            if(!valid())throw Error('Lead changed');
+            const pause=Math.max(0,lastGeocodeAt+1100-Date.now());lastGeocodeAt=Date.now()+pause;
+            if(pause)await new Promise(r=>setTimeout(r,pause));
+            const candidates=await estimateJson('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ca&limit=5&q='+encodeURIComponent(fallback.query));
+            match=areaDistanceCandidate(candidates,fallback);if(match)break;
+          }
+        }
+        const p=match?.place,lat=Number(p?.lat),lon=Number(p?.lon);
+        if(!p||!Number.isFinite(lat)||!Number.isFinite(lon)||lat<41||lat>84||lon< -141||lon> -52)throw Error('No usable address, postal-area or city location found. Verify in Maps.');
+        // Area fallbacks are labelled approximations, never house verification or cutoff clearance.
         const route=await estimateJson('https://router.project-osrm.org/route/v1/driving/-79.6441,43.589;'+lon+','+lat+'?overview=false&steps=false');
         const metres=route?.routes?.[0]?.distance;
         if(route.code!=='Ok'||typeof metres!=='number'||!Number.isFinite(metres)||metres<0)throw Error('Driving route unavailable');
@@ -456,11 +838,12 @@
     try{
       const entry=estimateRequests.get(address),result=await entry.promise,km=result.km;if(!valid()||(distances.get(key)&&!distances.get(key).estimated))return;
       distances.set(key,{km,precision:result.precision,estimated:true,readAt:Date.now()});panel.querySelector('#spa-km').value=String(Math.round(km*10)/10);
-      const approximate=result.precision==='street';
+      const approximate=result.precision!=='address';
       box.dataset.tone=!approximate&&gtaMarket(lead.region)&&km>150?'red':'';
-      box.textContent=km.toFixed(1)+(approximate?' km · Street estimate. Verify house route.':' km · Estimated drive from Mississauga.');
-      const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=approximate?'Street/city matched; house/postal location unverified. Do not use this estimate to decide eligibility.':'OpenStreetMap / OSRM route. Toll avoidance is not verified.';updateHeader();
-    }catch(e){const request=estimateRequests.get(address);if(request){request.failed=true;request.retryAt=transientLookupFailure(e.message)&&request.attempts<3?Date.now()+30000*request.attempts:0;}
+      const area=result.precision==='postal'?'Postal-area':result.precision==='city'?'City-area':'Street';
+      box.textContent=km.toFixed(1)+(approximate?' km · '+area+' estimate, NOT house distance.':' km · Estimated drive from Mississauga.');
+      const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=approximate?area+' location only; actual house distance may differ substantially. Do not use this estimate to decide the 150 km cutoff. OpenStreetMap / OSRM; tolls may be included.':'OpenStreetMap / OSRM route. Toll avoidance is not verified.';updateHeader();
+    }catch(e){const request=estimateRequests.get(address);if(request){request.failed=true;request.error=e.message;request.retryAt=transientLookupFailure(e.message)&&request.attempts<3?Date.now()+30000*request.attempts:0;}
       if(valid()){distances.set(key,{estimated:true,error:true});box.textContent='Distance unavailable.'+(request?.retryAt?' Retrying automatically.':' See details or verify in Maps.');const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=e.message;updateHeader();}}
   }
   const housingChecks=new Map();
@@ -497,6 +880,9 @@
     if(!lead||!panel)return;
     const address=clean(panel.querySelector('#spa-address')?.value);
     if(!lead.street||!listingIdentity(address)||lead.uncertain)return;
+    // Start the selected opt-in search immediately, even when background results are cached.
+    // Do not wait for up to six sequential remote requests before opening the user's chosen site.
+    openPropertyTabs(false);
     const existing=housingChecks.get(address),retryDue=existing?.retryAt&&existing.retryAt<=Date.now();
     if(existing&&!retryDue&&Date.now()-existing.started<LISTING_TTL)return;
     const state=retryDue?{...existing,started:Date.now(),attempts:existing.attempts+1,retryAt:0}:{started:Date.now(),attempts:1,retryAt:0,statuses:{Zillow:'Queued',Redfin:'Queued','Realtor.com':'Queued'}};housingChecks.set(address,state);
@@ -558,12 +944,29 @@
   // Made by Montana. Preserve creator credit when reviewing this interface.
   function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
+    const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
+    panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
+    panel.querySelector('#spa-history-sound').onclick=()=>{const enabled=!historySoundEnabled();if(!saveValue(HISTORY_SOUND_KEY,enabled)){notice('Could not save sound preference.');return;}updateHistorySound();if(enabled)unlockHistorySound();};
+    panel.querySelector('#spa-history-ack').onclick=()=>{historyAcknowledged=historyAlarmKey;updateHistorySound();};updateHistorySound();
     const themeSelect=document.createElement('select');themeSelect.id='spa-theme';themeSelect.setAttribute('aria-label','Color theme');
-    for(const [value,theme] of Object.entries(THEMES)){const option=document.createElement('option');option.value=value;option.textContent=theme.label;themeSelect.append(option);}
+    const themeGroups=new Map();
+    for(const [value,theme] of Object.entries(THEMES)){const groupName=theme.group||'Original themes';if(!themeGroups.has(groupName)){const group=document.createElement('optgroup');group.label=groupName;themeGroups.set(groupName,group);themeSelect.append(group);}const option=document.createElement('option');option.value=value;option.textContent=theme.label;themeGroups.get(groupName).append(option);}
     panel.querySelector('footer').prepend(themeSelect);applyTheme(savedValue(THEME_KEY,'destiny'));
     themeSelect.onchange=()=>{applyTheme(themeSelect.value);if(!saveValue(THEME_KEY,themeSelect.value))notice('Theme changed; could not save preference.');};
+    const settings=document.createElement('details');settings.id='spa-settings';
+    const settingsTitle=document.createElement('summary');settingsTitle.textContent='⚙ Settings';settingsTitle.setAttribute('aria-label','Settings: theme, sound, snapping and diagnostics');settings.append(settingsTitle);
+    const settingsBody=document.createElement('div');settingsBody.className='spa-settings-body';settings.append(settingsBody);
+    const themeLabel=document.createElement('label');themeLabel.textContent='Color theme';themeLabel.append(themeSelect);settingsBody.append(themeLabel,audioControls,panel.querySelector('#spa-reset-layout'));
+    const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
+    const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
     const header=panel.querySelector('header');header.onpointerdown=e=>{if(e.button!==0||e.target.closest('button'))return;const r=panel.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;header.setPointerCapture(e.pointerId);header.onpointermove=m=>{panel.style.left=m.clientX-x+'px';panel.style.top=m.clientY-y+'px';panel.style.right='auto';clamp();};header.onpointerup=header.onpointercancel=()=>{header.onpointermove=null;save();};};
-    panel.querySelector('[data-action=mini]').onclick=()=>{const r=panel.getBoundingClientRect();if(panel.dataset.mini!=='true'){panel.dataset.w=String(r.width);panel.dataset.h=String(r.height);panel.dataset.mini='true';}else{panel.dataset.mini='false';panel.style.width=(Number(panel.dataset.w)||320)+'px';panel.style.height=(Number(panel.dataset.h)||480)+'px';}miniLabel();clamp();save();};
+    panel.querySelector('[data-action=mini]').onclick=()=>setPanelMode(panel.dataset.mini==='true'?'full':'compact');
+    const bubbleShortcut=document.createElement('button');bubbleShortcut.textContent='○';bubbleShortcut.title='Bubble mode';bubbleShortcut.setAttribute('aria-label','Bubble mode');bubbleShortcut.onclick=()=>setPanelMode('bubble');header.append(bubbleShortcut);
+    const quick=document.createElement('button');quick.id='spa-quick-bubble';panel.append(quick);
+    let dragged=false;
+    quick.onpointerdown=e=>{if(e.button!==0)return;dragged=false;const r=panel.getBoundingClientRect(),x=e.clientX,y=e.clientY;quick.setPointerCapture(e.pointerId);quick.onpointermove=m=>{if(Math.hypot(m.clientX-x,m.clientY-y)>4)dragged=true;if(!dragged)return;panel.style.left=r.left+m.clientX-x+'px';panel.style.top=r.top+m.clientY-y+'px';panel.style.right='auto';clamp();};quick.onpointerup=quick.onpointercancel=()=>{quick.onpointermove=null;snapBubbleToEdge();save();};};
+    quick.onclick=()=>{if(dragged){dragged=false;return;}const target=quick.dataset.target;setPanelMode('full');const item=panel.querySelector('#'+target);const section=item?.closest('details');if(section)section.open=true;item?.scrollIntoView({block:'nearest'});};
+    updateQuickBubble();const quickTimer=setInterval(()=>{if(!quick.isConnected){clearInterval(quickTimer);return;}updateQuickBubble();refreshCheckFreshness();refreshWorkflow();},1500);
     if(typeof ResizeObserver==='function')new ResizeObserver(()=>{clearTimeout(saveTimer);saveTimer=setTimeout(()=>{clamp();save();},220);}).observe(panel);
     else {panel.addEventListener('pointerup',()=>{clamp();save();});startupIssues.add('Resize observer unavailable');}
     window.addEventListener('storage',e=>{if(e.key===KEY){windowSync=true;restore();setTimeout(()=>windowSync=false,500);}});
@@ -571,7 +974,7 @@
   }
   function setupSections(main){
     let preferences={};try{preferences=JSON.parse(localStorage.getItem('sixx-property-sections-v1')||'{}')||{};}catch{}
-    const definitions=[['distance','spa-distance'],['duplicates','spa-dupes'],['property','spa-extracted'],['copy','spa-name']];
+    const definitions=[['distance','spa-distance'],['history','spa-history'],['duplicates','spa-dupes'],['property','spa-extracted'],['copy','spa-name']];
     for(const [key,id] of definitions){
       const section=main.querySelector('#'+id)?.closest('section');if(!section)continue;
       const title=section.querySelector(':scope > strong');if(!title)continue;
@@ -586,14 +989,18 @@
     }
   }
   function renderLead(){const previousDistance=distances.get(distanceKey());const main=panel.querySelector('main');main.innerHTML=`
-    <section><strong>Copy details</strong><label>Homeowner<input id="spa-name" value="${esc(titleCase(lead.name))}"></label><label>Address<textarea id="spa-address">${esc(titleCase(lead.address,true))}</textarea></label><small>Check spelling before copying.</small>
+    <section><strong>Copy details</strong><input id="spa-name" type="hidden" value="${esc(titleCase(lead.name))}"><label>Homeowner first name<input id="spa-first-name" value="${esc((lead.nameParts||homeownerParts(lead.name)).first)}"></label><label>Homeowner last name<input id="spa-last-name" value="${esc((lead.nameParts||homeownerParts(lead.name)).last)}"></label><small>${(lead.nameParts||homeownerParts(lead.name)).inferred?'Name split inferred. Check compound surnames or multiple homeowners before copying.':'Name fields read from the lead. Check spelling before copying.'}</small><div class="row"><button id="spa-copy-first">Copy first name</button><button id="spa-copy-last">Copy last name</button></div><label>Address<textarea id="spa-address">${esc(titleCase(lead.address,true))}</textarea></label><small>Check spelling before copying.</small>
     ${lead.routing?`<p class="status">Routing ZIP instructions found. ${lead.uncertain?'Physical ZIP needs review before lookup/copy.':'Physical ZIP used in preview; original lead unchanged.'}</p>`:''}
     <div class="row"><button id="spa-copy-name">Copy name</button><button id="spa-copy-address">Copy address</button><button id="spa-copy-both">Copy both</button></div><label>Design consultant<input id="spa-consultant" value="${esc(titleCase(lead.consultant))}" placeholder="Not detected; verify assignment"></label><div class="row"><button id="spa-copy-consultant">Copy consultant</button><button id="spa-copy-contract">Copy all three</button></div></section>
+    <section><strong>Appointment history &amp; warnings</strong><div id="spa-history" aria-live="polite">Reading history…</div></section>
     <section><strong>Duplicate leads</strong><div id="spa-dupes" class="status">Waiting to check…</div><button id="spa-recheck">Recheck</button></section>
     <section><strong>Property details</strong><div id="spa-extracted" class="status">Checking saved listing details…</div><div class="row"><select id="spa-source" aria-label="Verification source"><option value="zillow">Zillow</option><option value="redfin">Redfin</option><option value="realtor">Realtor.com</option><option value="maps">Google Maps</option></select><button id="spa-verify">Search address</button></div><div id="spa-unit-warning" class="status" role="status" hidden></div><button id="spa-unit-reviewed" hidden>Checked: no unit applies</button>
     <details><summary>Compare a listing</summary><p>Enabled+ type: ${esc(lead.type||'Not detected')}</p><label>Address copied from listing<input id="spa-listing-address" placeholder="Full address including unit and postal code"></label><label>Property type shown<select id="spa-listing-type"><option value="">Not checked / unavailable</option>Single family</option>Townhouse</option>Condo</option>Multifamily</option>Manufactured / mobile</option>Other</option></select></label><div id="spa-comparison" class="status">Manual comparison, not automatically verified.</div></details></section>
     ${canadianLead(lead)?`<section><strong>Canada distance</strong><div id="spa-distance" class="status">Calculating automatically…</div><button id="spa-route">Verify in Maps</button><details><summary>Distance settings &amp; details</summary><label>Verified distance (km)<input id="spa-km" type="number" min="0" step="0.1" placeholder="Automatic"></label><p>Estimate from central Mississauga. Maps uses L5N 2X5 with avoid tolls; results may differ. The 150 km cutoff applies to Central GTA only, not Eastern GTA or other markets.</p><div id="spa-distance-details"></div></details></section>`:''}`;
     const get=id=>panel.querySelector('#'+id);
+    const syncName=()=>{get('spa-name').value=clean(get('spa-first-name').value+' '+get('spa-last-name').value);};
+    for(const part of ['first','last']){get('spa-'+part+'-name').oninput=syncName;get('spa-copy-'+part).onclick=()=>{const value=titleCase(get('spa-'+part+'-name').value);if(!value){notice('Check the homeowner '+part+' name before copying.');return;}copy(value);};}
+    syncName();
     const tabs=document.createElement('div');tabs.innerHTML='<label class="spa-tab-toggle"><input id="spa-auto-tabs" type="checkbox"> Auto-open selected site only</label><small>Uses the dropdown below. One tab per check, with this address. Shares the address with Google and the selected site.</small><button id="spa-open-tabs" type="button">Open selected check</button><small id="spa-tabs-status" role="status"></small>';
     get('spa-extracted').after(tabs);
     get('spa-auto-tabs').checked=savedValue(PROPERTY_TABS_KEY,false)===true;
@@ -627,7 +1034,7 @@
     const retry=document.createElement('button');retry.textContent='Retry checks';retry.id='spa-retry-checks';retry.title='Retry property, distance and duplicate checks without changing your layout or settings';
     get('spa-extracted').after(retry);retry.onclick=()=>{retry.disabled=true;const address=clean(get('spa-address').value);housingChecks.delete(address);estimateRequests.delete(address);if(distances.get(distanceKey())?.estimated)distances.delete(distanceKey());automaticHousing();automaticDistance();duplicateCheck().catch(()=>notice('Duplicate lookup unavailable.'));setTimeout(()=>{if(retry.isConnected)retry.disabled=false;},30000);};
     setupSections(main);
-    refreshListing();refreshRoute();updateHeader();automaticDistance();automaticHousing();
+    refreshHistory();refreshListing();refreshRoute();updateHeader();automaticDistance();automaticHousing();
     get('spa-address').addEventListener('change',()=>automaticDistance());
     get('spa-address').addEventListener('change',()=>automaticHousing());
   }
@@ -644,13 +1051,13 @@
     try {
       // Mount before parsing lead data. A failed optional reader must not suppress the panel.
       if(!panel||!panel.isConnected){panel=null;identity='';startPanel();panel.querySelector('main').textContent='Loading lead details…';}
-      const next=readLead();if(!next.id){generation++;controller?.abort();lead=null;identity='';listingType='';matchedListing=null;matchedListings=[];panel.querySelector('main').textContent='Waiting for current lead details…';panel.querySelector('#spa-title').textContent='Property Assistant · Waiting';panel.querySelector('#spa-subtitle').textContent='';panel.querySelector('#spa-stop').style.display='none';for(const id of ['spa-check-badge','spa-unit-badge','spa-territory-warning']){const badge=panel.querySelector('#'+id);if(badge)badge.textContent='';}notice('Waiting for the lead ID. Refresh the lead if this remains.');return;}
-      const key=JSON.stringify(next);if(key===identity){resumeAutomaticChecks();return;}
+      const next=readLead();if(!next.id){setHistoryAlarm('');generation++;controller?.abort();lead=null;identity='';listingType='';matchedListing=null;matchedListings=[];panel.querySelector('main').textContent='Waiting for current lead details…';panel.querySelector('#spa-title').textContent='Property Assistant · Waiting';panel.querySelector('#spa-subtitle').textContent='';panel.querySelector('#spa-stop').style.display='none';const historyBubble=panel.querySelector('#spa-history-bubble');if(historyBubble)historyBubble.hidden=true;for(const id of ['spa-check-badge','spa-unit-badge','spa-territory-warning']){const badge=panel.querySelector('#'+id);if(badge)badge.textContent='';}notice('Waiting for the lead ID. Refresh the lead if this remains.');return;}
+      const key=JSON.stringify(next);if(key===identity){refreshHistory();resumeAutomaticChecks();return;}
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.6.0 · '+[...startupIssues].join('; '):'v0.6.0 TEST · Read-only');
-    }catch(error){identity='';if(panel?.querySelector('#spa-notice'))notice('v0.6.0 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.16 · '+[...startupIssues].join('; '):'v0.7.16 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.16 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -730,7 +1137,13 @@
   scan();
   watchValue(LISTINGS_KEY,refreshListing);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.6.0 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.16 · '+[...startupIssues].join('; '));
+  watchValue(HISTORY_SOUND_KEY,updateHistorySound);
+  document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
+  window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)stopHistorySound();else updateHistorySound();});
+  window.addEventListener('focus',schedule);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
   watchValue(THEME_KEY,()=>applyTheme(savedValue(THEME_KEY,'destiny')));
   watchValue(PROPERTY_SOURCE_KEY,()=>{const select=panel?.querySelector('#spa-source'),value=savedValue(PROPERTY_SOURCE_KEY,'');if(select&&['zillow','redfin','realtor','maps'].includes(value))select.value=value;});
   watchValue(PROPERTY_TABS_KEY,()=>{const toggle=panel?.querySelector('#spa-auto-tabs');if(toggle)toggle.checked=savedValue(PROPERTY_TABS_KEY,false)===true;});
