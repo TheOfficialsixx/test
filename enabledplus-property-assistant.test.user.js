@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.7.16
+// @version      0.7.23
 // @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
@@ -101,6 +101,20 @@
     ['kwanzaa','Kwanzaa · Red & Green','More celebrations','#151b16','#273429','#c5ecc6','#ffbfc2','#ffe7bc']
   ];
   for(const [key,...palette] of extraPalettes)THEMES[key]=darkPalette(...palette);
+  // Made by Montana. Plain palettes use distinct full-surface colors, not one dark base.
+  function daylightPalette(key,bg,surface,field,text,muted,accent,pink,button,hover){
+    Object.assign(THEMES[key],{bg,surface,field,text,muted,accent,pink,button,hover,header:bg,heading:accent,border:muted,warning:'#664000',danger:'#8b1232',dangerBg:'#ffe4ea',success:'#155338',successBg:'#e1f3e3'});
+  }
+  daylightPalette('gold','#fff0a3','#fff8d4','#fffdf0','#3d2905','#66501b','#684400','#704015','#f2d16a','#e6c05c');
+  daylightPalette('powderBlue','#ccecff','#eaf7ff','#f6fcff','#102d4c','#37556a','#004875','#343580','#acd9f2','#96cae9');
+  daylightPalette('purpleSoftPink','#e8dafa','#f8eaf4','#fff7ff','#35194e','#614563','#4c246e','#762348','#d6b8ec','#c9a5e1');
+  daylightPalette('dustyPink','#e8c2b9','#f5e0d5','#fff4eb','#402923','#655046','#633b31','#583c53','#d8b1a5','#cca293');
+  Object.assign(THEMES.purpleBlue,{bg:'#072e5b',surface:'#0d3a70',field:'#052345',header:'#072e5b',button:'#15437a',hover:'#23528c',accent:'#90edff',pink:'#e5beff',heading:'#bcd8ff',border:'#76a9d3'});
+  Object.assign(THEMES.hotPink,{bg:'#650039',surface:'#780447',field:'#470029',header:'#650039',button:'#850d53',hover:'#941862',accent:'#fff3a8',pink:'#ffffff',heading:'#ffffff',border:'#ff87c8'});
+  Object.assign(THEMES.burgundy,{bg:'#4d1324',surface:'#611c2e',field:'#350b19',header:'#4d1324',button:'#70273b',hover:'#813448',accent:'#f7d49b',pink:'#ffd8d9',heading:'#ffe9ba',border:'#c98b80'});
+  Object.assign(THEMES.burgundyForest,{bg:'#173b28',surface:'#214c35',field:'#0b281b',header:'#173b28',button:'#522338',hover:'#653147',accent:'#ddf4bc',pink:'#ffd0df',heading:'#fff0c3',border:'#97b58a'});
+  Object.assign(THEMES.brown,{bg:'#3b2413',surface:'#4d321c',field:'#29190d',header:'#3b2413',button:'#604126',hover:'#725134',accent:'#ffe3a9',pink:'#f7c5a8',heading:'#fff0d2',border:'#bc9468'});
+  Object.assign(THEMES.royalPurple,{bg:'#35116b',surface:'#471a83',field:'#25084f',header:'#35116b',button:'#56258d',hover:'#67379f',accent:'#ffe197',pink:'#eacfff',heading:'#fff1bd',border:'#b38cdd'});
   // Made by Montana. Local vector artwork: no remote images, tracking, or page interaction.
   const THEME_ICONS={
     star:'<path d="m16 3 4 8 9 2-7 6 1 10-7-5-8 5 2-10-7-6 9-2z"/>',
@@ -479,6 +493,9 @@
     const audioStatus=panel?.querySelector('#spa-audio-status');
     if(audioStatus)audioStatus.textContent=!historySoundEnabled()?'Sound off':!historyAlarmKey?'Sound on · No history flags':historyAlarmKey===historyAcknowledged?'Current alert acknowledged':document.hidden||!document.hasFocus()?'Sound paused · Tab inactive':historyAudio?.state!=='running'?'Sound on · Click here to unlock audio':'Sound on · History alert active';
     if(mute){mute.textContent=historySoundEnabled()?'Mute sound':'Enable sound';mute.setAttribute('aria-pressed',String(historySoundEnabled()));mute.title=historySoundEnabled()&&historyAudio?.state!=='running'?'Click the page once to enable browser audio':'Sound preference is remembered across leads';}
+    const soundSwitch=panel?.querySelector('#spa-sound-switch');
+    if(soundSwitch){soundSwitch.setAttribute('aria-checked',String(historySoundEnabled()));soundSwitch.title=historySoundEnabled()?'Mute alerts (saved across leads)':'Enable alert sound (saved across leads)';}
+    const soundLabel=panel?.querySelector('#spa-sound-label');if(soundLabel)soundLabel.textContent=historySoundEnabled()?'Sound on':'Muted';
     if(ack){ack.hidden=!historyAlarmKey;ack.disabled=historyAlarmKey===historyAcknowledged;ack.textContent=ack.disabled?'Acknowledged':'Acknowledge';}
     if(!historySoundAllowed()){stopHistorySound();return;}
     if(historySoundTimer===null){historyBeep();historySoundTimer=setInterval(historyBeep,2500);}
@@ -621,6 +638,19 @@
     #${ID}[data-theme] header:after{height:34px;bottom:3px;background-image:var(--spa-art);background-repeat:repeat-x;background-size:160px 34px;pointer-events:none;opacity:.85}
     #${ID}[data-mini=true] header{padding-bottom:34px;min-height:70px}
     #${ID}[data-mini=true] header:after{height:26px;background-size:125px 26px}
+    #${ID} #spa-version{display:block;font-size:10px;line-height:1.4;letter-spacing:.04em;color:var(--spa-muted);margin-bottom:3px}
+    #${ID} #spa-compact{display:none}
+    #${ID}[data-mini=true]:not([data-bubble=true]){width:224px!important;min-width:180px;border-radius:12px}
+    #${ID}[data-mini=true] header{padding:8px;min-height:0;gap:5px}
+    #${ID}[data-mini=true] header:after{display:block}
+    #${ID}[data-mini=true] .spa-heading>:not(#spa-version):not(#spa-compact){display:none!important}
+    #${ID}[data-mini=true] #spa-compact{display:block;min-width:0}
+    #${ID} #spa-compact strong,#${ID} #spa-compact small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #${ID} #spa-compact strong{font-size:12px;line-height:1.4}
+    #${ID} #spa-compact small{font-size:10px;line-height:1.5}
+    #${ID} #spa-compact .spa-compact-alert{color:var(--spa-danger)}
+    #${ID} #spa-compact .spa-compact-alert:before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;background:currentColor;animation:spa-notification-dot 2s ease-in-out infinite}
+    @media(prefers-reduced-motion:reduce){#${ID} #spa-compact .spa-compact-alert:before{animation:none}}
     #${ID} #spa-quick-bubble{display:none}
     #${ID} #spa-settings{width:100%;margin:0}
     #${ID} #spa-settings>summary{font-size:12px;font-weight:600;padding:5px;min-height:28px}
@@ -640,6 +670,12 @@
     #${ID}[data-bubble=true] #spa-quick-bubble strong{font-size:15px;line-height:1.2;color:var(--spa-bg)}
     #${ID}[data-bubble=true] #spa-quick-bubble small{font-size:9px;line-height:1.2;color:var(--spa-bg)}
     #${ID} .spa-quick-count{position:absolute;right:-3px;top:-3px;min-width:18px;padding:1px 3px;border-radius:10px;background:var(--spa-dangerBg);color:var(--spa-danger);border:1px solid var(--spa-danger);font-size:10px}
+    #${ID} .spa-unit-dot{position:absolute;bottom:-2px;left:-2px;width:17px;height:17px;border-radius:50%;background:var(--spa-bg);color:var(--spa-warning);border:1px solid var(--spa-warning);font-size:12px;font-weight:bold;animation:spa-notification-dot 2s ease-in-out infinite}
+    #${ID} #spa-quick-bubble[data-tone=verified]{border-color:var(--spa-success)}
+    #${ID} #spa-quick-bubble[data-tone=unit]{border-color:var(--spa-warning)}
+    #${ID}[data-bubble=true] #spa-quick-bubble[data-mobile=true]{background:var(--spa-dangerBg);color:var(--spa-danger)}
+    #${ID}[data-bubble=true] #spa-quick-bubble[data-mobile=true] strong,#${ID}[data-bubble=true] #spa-quick-bubble[data-mobile=true] small{color:var(--spa-danger)}
+    @media(prefers-reduced-motion:reduce){#${ID} .spa-unit-dot{animation:none}}
     #${ID} #spa-quick-bubble[data-tone=alert]{border-color:var(--spa-danger);animation:spa-quick-pulse 2.4s ease-in-out infinite}
     @keyframes spa-quick-pulse{0%,100%{box-shadow:0 0 0 2px var(--spa-danger)}45%,65%{box-shadow:0 0 0 7px var(--spa-danger),0 0 20px 7px var(--spa-danger);transform:scale(1.07)}}
     #${ID}[data-bubble=true] #spa-quick-bubble[data-tone=alert]{animation-duration:1.8s}
@@ -648,6 +684,62 @@
     #${ID} .spa-stop{animation:none;padding:3px 5px;border-radius:4px}
     @media(prefers-reduced-motion:reduce){#${ID} .spa-section-flag:before,#${ID} #spa-history-bubble:before,#${ID} .spa-stop:before{animation:none;opacity:1}}
     @media(prefers-reduced-motion:reduce){#${ID} #spa-quick-bubble[data-tone=alert]{animation:none}}
+    /* Bottom settings remain reachable, with their own bounded scrolling area. */
+    #${ID}{box-sizing:border-box;max-width:calc(100vw - 12px);max-height:calc(100vh - 12px)}
+    #${ID}[data-mini=true]:not([data-bubble=true]) header{display:grid;grid-template-columns:1fr repeat(3,28px);align-items:center;padding-bottom:40px}
+    #${ID}[data-mini=true] .spa-heading{display:contents}
+    #${ID}[data-mini=true] #spa-version{grid-row:1;grid-column:1;font-size:10px}
+    #${ID}[data-mini=true] header>button{grid-row:1;width:28px;padding:0}
+    #${ID}[data-mini=true] #spa-compact{grid-row:2;grid-column:1 / -1;width:100%}
+    #${ID}[data-mini=true] #spa-compact .spa-compact-alert{white-space:normal}
+    #${ID} footer{display:block;max-height:45%;overflow:hidden;flex-shrink:0}
+    #${ID} #spa-settings{display:flex;flex-direction:column;min-height:0}
+    #${ID} #spa-settings>summary{position:sticky;top:0;background:var(--spa-surface);z-index:1}
+    #${ID} .spa-settings-body{max-height:min(180px,25vh);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:6px}
+    #${ID} .spa-preferences{min-width:0;border:1px solid var(--spa-border);border-radius:6px;margin:4px 0;padding:7px}
+    #${ID} .spa-preferences legend{color:var(--spa-heading)}
+    #${ID} footer #spa-credit{font-size:10px}
+    #${ID}[data-density=compact] main,#${ID}[data-density=compact] .spa-section-body{padding:6px}
+    #${ID}[data-density=compact] .spa-section>summary{padding:6px 8px}
+    #${ID}[data-density=compact] label{margin:3px 0}
+    #${ID}[data-density=compact] header{padding-bottom:43px;min-height:95px}
+    #${ID}[data-density=compact] header:after{display:block}
+    #${ID}[data-density=large]{font-size:16px}
+    #${ID}[data-density=large] small,#${ID}[data-density=large] header small,#${ID}[data-density=large] footer,#${ID}[data-density=large] footer button,#${ID}[data-density=large] .spa-audio-settings button,#${ID}[data-density=large] #spa-settings>summary{font-size:14px}
+    #${ID}[data-density=large] header strong,#${ID}[data-density=large] #spa-compact strong{font-size:16px}
+    #${ID}[data-density=large] #spa-compact small{font-size:13px}
+    #${ID}[data-motion=steady] *,#${ID}[data-motion=steady] *:before,#${ID}[data-motion=steady] *:after{animation:none!important;transition:none!important}
+    #${ID} header button{flex-shrink:0;min-width:28px}
+    @media(max-height:500px){
+      #${ID}[data-theme] header{padding-bottom:43px;min-height:0;max-height:40%}
+      #${ID}[data-theme] header:after{display:block}
+      #${ID} footer{padding:4px 6px}
+      #${ID} footer #spa-notice,#${ID} footer #spa-credit{display:none}
+    }
+    #${ID} .spa-theme-previews{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin-top:6px}
+    #${ID} .spa-theme-previews button{font-size:12px;text-align:left;min-height:54px;padding:6px}
+    #${ID} .spa-theme-swatches{display:flex;gap:3px;margin-bottom:4px}
+    #${ID} .spa-theme-swatches i{display:block;width:15px;height:15px;border:1px solid currentColor;border-radius:50%}
+    #${ID}[data-artwork=false] header:after,#${ID}[data-artwork=false] #spa-quick-bubble:before{display:none!important}
+    #${ID}[data-artwork=false] header{padding-bottom:8px!important;min-height:0!important}
+    /* Status chips have consistent semantic colors independent of decorative palettes. */
+    #${ID} .spa-section-flag{background:#fff1c2;color:#694000}
+    #${ID} [data-attention=red] .spa-section-flag,#${ID} .spa-quick-count{background:#ffe4e6;color:#9f1239;border-color:#9f1239}
+    #${ID} .spa-unit-dot{background:#fff1c2;color:#694000;border-color:#694000}
+    #${ID}[data-bubble=true] #spa-quick-bubble[data-mobile=true]{background:#ffe4e6;color:#9f1239;border-color:#9f1239}
+    #${ID}[data-bubble=true] #spa-quick-bubble[data-mobile=true] strong,#${ID}[data-bubble=true] #spa-quick-bubble[data-mobile=true] small{color:#9f1239}
+    #${ID}[data-bubble=true] #spa-quick-bubble[data-tone=verified] strong,#${ID}[data-bubble=true] #spa-quick-bubble[data-tone=unit] strong{background:#dcfce7;color:#14532d;border-radius:50%;padding:0 3px}
+    /* Artwork occupies its own row instead of overlaying long header text. */
+    #${ID}[data-theme] header{flex-wrap:wrap;padding-bottom:8px;min-height:0}
+    #${ID}[data-theme] header:after{position:static;flex:0 0 100%;width:100%;height:30px;min-height:30px;grid-column:1 / -1;grid-row:3}
+    #${ID} #spa-sound-bar{display:flex;flex:0 0 auto;align-items:center;justify-content:flex-end;gap:8px;padding:4px 9px;background:var(--spa-field);border-top:1px solid var(--spa-border);color:var(--spa-text);font-size:11px}
+    #${ID} #spa-history-sound{display:none}
+    #${ID} #spa-sound-switch{display:flex;align-items:center;justify-content:space-between;position:relative;width:62px;height:26px;min-height:26px;padding:2px 5px;border-radius:20px;background:var(--spa-button);border:1px solid var(--spa-border)}
+    #${ID} #spa-sound-switch span{font-size:12px;z-index:1;line-height:18px}
+    #${ID} #spa-sound-switch i{position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--spa-accent);transition:transform .15s}
+    #${ID} #spa-sound-switch[aria-checked=true] i{transform:translateX(35px)}
+    #${ID}[data-bubble=true] #spa-sound-bar{display:none}
+    @media(prefers-reduced-motion:reduce){#${ID} #spa-sound-switch i{transition:none}}
     @container (max-width:360px){
       #${ID} main,#${ID} .spa-section-body{padding:7px}
       #${ID} .row{flex-direction:column}
@@ -660,7 +752,19 @@
     }
     `;(document.head||document.documentElement).append(style);
   }
-  function clamp(){const r=panel.getBoundingClientRect();panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
+  function displayPreferences(value){
+    const p=value&&typeof value==='object'?value:{};
+    return {density:['compact','comfortable','large'].includes(p.density)?p.density:'comfortable',motion:p.motion==='steady'?'steady':'pulse',distance:p.distance!==false,history:p.history!==false,property:p.property!==false,artwork:p.artwork!==false};
+  }
+  function applyDisplayPreferences(){
+    const p=displayPreferences(savedValue('sixx-property-display-v1',{}));
+    panel.dataset.density=p.density;panel.dataset.motion=p.motion;panel.dataset.artwork=String(p.artwork);
+    return p;
+  }
+  function viewportBounds(width,height){
+    return {width:Math.max(1,width-12),height:Math.max(1,height-12)};
+  }
+  function clamp(){const bounds=viewportBounds(innerWidth,innerHeight);panel.style.maxWidth=bounds.width+'px';panel.style.maxHeight=bounds.height+'px';const r=panel.getBoundingClientRect();panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
   function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,minimized,bubble:panel.dataset.bubble==='true'}));}catch{}}
   function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);panel.dataset.bubble=String(s.bubble===true);panel.dataset.mini=String(s.minimized===true||s.bubble===true);panel.style.right='auto';miniLabel();clamp();}catch{}}
   function setPanelMode(mode){
@@ -674,16 +778,41 @@
     const label=mobile?'MH':canada&&Number.isFinite(km)?String(Math.round(km)):count?'H'+count:canada&&!distance?.error?'…':'?';
     return {label,count,tone:mobile||count?'alert':'review',unit:!mobile&&canada&&Number.isFinite(km)?'km est.':mobile?'review':count?'history':'review',target:mobile?'spa-extracted':count?'spa-history':canada?'spa-km':'spa-extracted'};
   }
+  function propertyBubbleState(base,records,warning,unitReview,now=Date.now()){
+    if(base.label==='MH')return {...base,label:'✕',unit:'Mobile home',target:'spa-extracted',tone:'alert',mobile:true};
+    const fresh=records.filter(r=>Number.isFinite(r.readAt)&&now>=r.readAt&&now-r.readAt<LISTING_TTL);
+    const types=[...new Set(fresh.map(r=>propertyLabel(r.type)))];
+    if(warning||types.length>1)return {...base,label:'!',unit:'Type review',target:'spa-extracted',tone:'alert',unitReview:!!unitReview};
+    const labels={'Single family home':'Single family',Townhouse:'Townhouse',Condo:'Condo'};
+    if(types.length!==1||!labels[types[0]])return base;
+    return {...base,label:'✓',unit:labels[types[0]],target:'spa-extracted',tone:base.count?'alert':unitReview?'unit':'verified',unitReview:!!unitReview,verified:true};
+  }
+  function compactSummary(current,distance,property,mobile,historyCount,flagCount,preferences={}){
+    if(!current)return {title:'Waiting for lead',detail:'No lead loaded',alert:''};
+    const canada=canadianLead(current)&&preferences.distance!==false;
+    const title=canada?(Number.isFinite(distance?.km)?Math.round(distance.km)+' km · estimate':distance?.error?'Distance unavailable':'Checking distance…'):(current.name||'Homeowner');
+    const detail=[current.region||'',mobile?'Mobile/manufactured':preferences.property===false?'':property||'Property not verified',preferences.history!==false&&historyCount?historyCount+' history results':''].filter(Boolean).join(' · ');
+    const alert=mobile?'Mobile home · review':flagCount?flagCount+' sections to review':historyCount?historyCount+' history results · review':'';
+    return {title,detail,alert};
+  }
   function updateQuickBubble(){
     const button=panel?.querySelector('#spa-quick-bubble');if(!button)return;
     const history=lead?readAppointmentHistory():{rows:[]};
     const mobile=!!lead&&(manufacturedType(lead.type)||manufacturedType(listingType)||matchedListings.some(r=>manufacturedType(r.type+' '+r.style)));
-    const state=quickBubbleState(lead,history,lead?distances.get(distanceKey()):null,mobile);
+    const unitReview=!!lead&&unitWarning(panel.querySelector('#spa-address')?.value||lead.address,lead.type,listingType,matchedListings.map(r=>r.type).join(' / '),lead.condoHint).show&&!unitAcknowledgments.has(unitReviewKey());
+    const state=propertyBubbleState(quickBubbleState(lead,history,lead?distances.get(distanceKey()):null,mobile),lead?matchedListings:[],lead?.propertyCheck?.warning,unitReview);
     const guidance=lead?historyGuidance(history).join(' '):'';
-    const summary=[lead?.name||'Waiting for lead',lead?.region||'',mobile?'Mobile/manufactured home: review required':'',history.rows.length+' history results needing review',guidance,panel.querySelector('#spa-title')?.textContent||'',panel.querySelector('#spa-subtitle')?.textContent||'','Open details. This indicator is not confirmation clearance.'].filter(Boolean).join(' · ');
-    button.dataset.tone=state.tone;button.dataset.target=state.target;
+    const compact=panel.querySelector('#spa-compact');
+    if(compact){
+      const flags=panel.querySelectorAll('.spa-section-flag:not([hidden])').length;
+      const info=compactSummary(lead,lead?distances.get(distanceKey()):null,lead?.propertyCheck?.label||listingType||(lead?.type?lead.type+' (lead)':''),mobile,history.rows.length,lead?flags:0,displayPreferences(savedValue('sixx-property-display-v1',{})));
+      compact.innerHTML='<strong>'+esc(info.title)+'</strong><small>'+esc(info.detail)+'</small>'+(info.alert?'<small class="spa-compact-alert">'+esc(info.alert)+'</small>':'');
+      compact.title=[info.title,info.detail,info.alert,'Restore for full details. Not confirmation clearance.'].filter(Boolean).join(' · ');
+    }
+    const summary=[lead?.name||'Waiting for lead',lead?.region||'',state.verified?'Property type read from a matching listing: '+state.unit:'',state.unitReview?'Check whether a unit number applies. Condos and townhouses do not always have one.':'',mobile?'Mobile/manufactured home: review required':'',history.rows.length+' history results needing review',guidance,panel.querySelector('#spa-title')?.textContent||'',panel.querySelector('#spa-subtitle')?.textContent||'','Open details. This indicator is not confirmation clearance.'].filter(Boolean).join(' · ');
+    button.dataset.tone=state.tone;button.dataset.target=state.target;button.dataset.mobile=String(!!state.mobile);
     button.title=summary;button.setAttribute('aria-label',summary);
-    button.innerHTML='<strong>'+esc(state.label)+'</strong><small>'+esc(state.unit)+'</small>'+(state.count?'<span class="spa-quick-count">'+Math.min(state.count,99)+(state.count>99?'+':'')+'</span>':'');
+    button.innerHTML='<strong>'+esc(state.label)+'</strong><small>'+esc(state.unit)+'</small>'+(state.count?'<span class="spa-quick-count">'+Math.min(state.count,99)+(state.count>99?'+':'')+'</span>':'')+(state.unitReview?'<span class="spa-unit-dot" aria-hidden="true">!</span>':'');
   }
   function freshnessLabel(readAt,now=Date.now()){
     if(!Number.isFinite(readAt)||readAt>now)return 'Not verified';
@@ -767,7 +896,7 @@
   }
   function safeIssueReport(){
     // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
-    return ['Property Assistant v0.7.16','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+    return ['Property Assistant v0.7.23','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
   }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
@@ -942,7 +1071,7 @@
     const unitButton=panel.querySelector('#spa-unit-reviewed');if(unitButton){unitButton.hidden=!(warning.show||acknowledged);unitButton.textContent=acknowledged?'No unit applies · Undo':'Checked: no unit applies';}
   }
   // Made by Montana. Preserve creator credit when reviewing this interface.
-  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
+  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.23</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
     const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
     panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
@@ -950,16 +1079,68 @@
     panel.querySelector('#spa-history-ack').onclick=()=>{historyAcknowledged=historyAlarmKey;updateHistorySound();};updateHistorySound();
     const themeSelect=document.createElement('select');themeSelect.id='spa-theme';themeSelect.setAttribute('aria-label','Color theme');
     const themeGroups=new Map();
-    for(const [value,theme] of Object.entries(THEMES)){const groupName=theme.group||'Original themes';if(!themeGroups.has(groupName)){const group=document.createElement('optgroup');group.label=groupName;themeGroups.set(groupName,group);themeSelect.append(group);}const option=document.createElement('option');option.value=value;option.textContent=theme.label;themeGroups.get(groupName).append(option);}
+    function favoriteThemes(){const value=savedValue('sixx-property-favorite-themes-v1',[]);return Array.isArray(value)?[...new Set(value.filter(key=>Object.hasOwn(THEMES,key)))]:[];}
+    function rebuildThemes(){
+    const current=panel.dataset.theme||savedValue(THEME_KEY,'destiny'),favorites=favoriteThemes();themeSelect.replaceChildren();themeGroups.clear();
+    for(const [value,theme] of Object.entries(THEMES).sort(([a],[b])=>Number(favorites.includes(b))-Number(favorites.includes(a)))){const groupName=favorites.includes(value)?'Favorites':theme.group||'Original themes';if(!themeGroups.has(groupName)){const group=document.createElement('optgroup');group.label=groupName;themeGroups.set(groupName,group);themeSelect.append(group);}const option=document.createElement('option');option.value=value;option.textContent=theme.label;themeGroups.get(groupName).append(option);}
+    themeSelect.value=current;
+    }
+    rebuildThemes();
     panel.querySelector('footer').prepend(themeSelect);applyTheme(savedValue(THEME_KEY,'destiny'));
     themeSelect.onchange=()=>{applyTheme(themeSelect.value);if(!saveValue(THEME_KEY,themeSelect.value))notice('Theme changed; could not save preference.');};
     const settings=document.createElement('details');settings.id='spa-settings';
-    const settingsTitle=document.createElement('summary');settingsTitle.textContent='⚙ Settings';settingsTitle.setAttribute('aria-label','Settings: theme, sound, snapping and diagnostics');settings.append(settingsTitle);
+    applyDisplayPreferences();
+    const settingsTitle=document.createElement('summary');settingsTitle.textContent='⚙ Settings';settingsTitle.setAttribute('aria-label','Settings: appearance, minimized details, motion, sound and layout');settings.append(settingsTitle);
     const settingsBody=document.createElement('div');settingsBody.className='spa-settings-body';settings.append(settingsBody);
     const themeLabel=document.createElement('label');themeLabel.textContent='Color theme';themeLabel.append(themeSelect);settingsBody.append(themeLabel,audioControls,panel.querySelector('#spa-reset-layout'));
+    function saveDisplay(key,value){
+      const prefs=displayPreferences(savedValue('sixx-property-display-v1',{}));prefs[key]=value;
+      if(!saveValue('sixx-property-display-v1',prefs)){notice('Could not save display preference.');return;}
+      applyDisplayPreferences();updateQuickBubble();clamp();
+    }
+    const appearance=document.createElement('fieldset');appearance.className='spa-preferences';
+    const legend=document.createElement('legend');legend.textContent='Display & accessibility';appearance.append(legend);
+    for(const [key,label,options] of [['density','Spacing & text',[['compact','Compact spacing'],['comfortable','Comfortable'],['large','Large text']]],['motion','Notifications',[['pulse','Pulsing dots'],['steady','Steady dots (no animation)']]]]){
+      const labelNode=document.createElement('label');labelNode.textContent=label;
+      const select=document.createElement('select');select.id='spa-pref-'+key;
+      for(const [value,text] of options){const option=document.createElement('option');option.value=value;option.textContent=text;select.append(option);}
+      select.value=displayPreferences(savedValue('sixx-property-display-v1',{}))[key];select.onchange=()=>saveDisplay(key,select.value);
+      labelNode.append(select);appearance.append(labelNode);
+    }
+    const minimized=document.createElement('fieldset');minimized.className='spa-preferences';
+    const miniLegend=document.createElement('legend');miniLegend.textContent='Compact view details';minimized.append(miniLegend);
+    for(const [key,label] of [['distance','Canadian distance'],['history','History count'],['property','Property type']]){
+      const labelNode=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.id='spa-pref-'+key;
+      input.checked=displayPreferences(savedValue('sixx-property-display-v1',{}))[key];input.onchange=()=>saveDisplay(key,input.checked);
+      labelNode.append(input,document.createTextNode(' '+label));minimized.append(labelNode);
+    }
+    const help=document.createElement('small');help.textContent='Important warnings always remain visible. Each main section remembers whether you leave it open or closed.';minimized.append(help);
+    settingsBody.append(appearance,minimized);
+    const resetAppearance=document.createElement('button');resetAppearance.textContent='Reset appearance';
+    resetAppearance.title='Reset theme, size and position only. Other preferences and results stay unchanged.';
+    resetAppearance.onclick=()=>{applyTheme('destiny');saveValue(THEME_KEY,'destiny');resetLayout();notice('Appearance reset. Other preferences and results kept.');};settingsBody.append(resetAppearance);
+    const artworkLabel=document.createElement('label'),artworkInput=document.createElement('input');artworkInput.type='checkbox';artworkInput.checked=displayPreferences(savedValue('sixx-property-display-v1',{})).artwork;
+    artworkInput.onchange=()=>saveDisplay('artwork',artworkInput.checked);artworkLabel.append(artworkInput,document.createTextNode(' Show theme artwork'));appearance.append(artworkLabel);
+    const favorite=document.createElement('button');favorite.textContent='☆ Toggle favorite for current theme';favorite.title='Add or remove the selected theme from Favorites at the top of the theme list.';
+    favorite.onclick=()=>{const key=panel.dataset.theme,list=favoriteThemes();if(!saveValue('sixx-property-favorite-themes-v1',list.includes(key)?list.filter(v=>v!==key):[...list,key])){notice('Could not save favorites.');return;}rebuildThemes();notice(THEMES[key].label+(favoriteThemes().includes(key)?' added to favorites.':' removed from favorites.'));};
+    const gallery=document.createElement('details'),galleryTitle=document.createElement('summary'),swatches=document.createElement('div');galleryTitle.textContent='Preview all themes';gallery.append(galleryTitle,swatches);swatches.className='spa-theme-previews';
+    for(const [key,t] of Object.entries(THEMES)){
+      const button=document.createElement('button');button.type='button';button.setAttribute('aria-label','Use '+t.label+' theme');button.style.background=t.bg;button.style.color=t.text;button.style.borderColor=t.border;
+      const colors=document.createElement('span');colors.className='spa-theme-swatches';colors.setAttribute('aria-hidden','true');
+      for(const color of [t.bg,t.surface,t.accent,t.pink]){const dot=document.createElement('i');dot.style.background=color;colors.append(dot);}
+      button.append(colors,document.createTextNode(t.label));button.onclick=()=>{applyTheme(key);saveValue(THEME_KEY,key);};swatches.append(button);
+    }
+    themeLabel.after(favorite,gallery);
+    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.23 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
     const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
     const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
-    const header=panel.querySelector('header');header.onpointerdown=e=>{if(e.button!==0||e.target.closest('button'))return;const r=panel.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;header.setPointerCapture(e.pointerId);header.onpointermove=m=>{panel.style.left=m.clientX-x+'px';panel.style.top=m.clientY-y+'px';panel.style.right='auto';clamp();};header.onpointerup=header.onpointercancel=()=>{header.onpointermove=null;save();};};
+    const soundBar=document.createElement('div');soundBar.id='spa-sound-bar';
+    soundBar.innerHTML='<span id="spa-sound-label">Muted</span><button id="spa-sound-switch" type="button" role="switch" aria-label="Alert sound" aria-checked="false"><span aria-hidden="true">🔇</span><i aria-hidden="true"></i><span aria-hidden="true">🔊</span></button>';
+    panel.append(soundBar);soundBar.querySelector('button').onclick=()=>panel.querySelector('#spa-history-sound').click();updateHistorySound();
+    const header=panel.querySelector('header');
+    const settingsShortcut=document.createElement('button');settingsShortcut.textContent='⚙';settingsShortcut.title='Settings';settingsShortcut.setAttribute('aria-label','Open settings');
+    settingsShortcut.onclick=()=>{setPanelMode('full');settings.open=!settings.open;if(settings.open)settingsTitle.focus();};header.append(settingsShortcut);
+    header.onpointerdown=e=>{if(e.button!==0||e.target.closest('button'))return;const r=panel.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;header.setPointerCapture(e.pointerId);header.onpointermove=m=>{panel.style.left=m.clientX-x+'px';panel.style.top=m.clientY-y+'px';panel.style.right='auto';clamp();};header.onpointerup=header.onpointercancel=()=>{header.onpointermove=null;save();};};
     panel.querySelector('[data-action=mini]').onclick=()=>setPanelMode(panel.dataset.mini==='true'?'full':'compact');
     const bubbleShortcut=document.createElement('button');bubbleShortcut.textContent='○';bubbleShortcut.title='Bubble mode';bubbleShortcut.setAttribute('aria-label','Bubble mode');bubbleShortcut.onclick=()=>setPanelMode('bubble');header.append(bubbleShortcut);
     const quick=document.createElement('button');quick.id='spa-quick-bubble';panel.append(quick);
@@ -1056,8 +1237,8 @@
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.7.16 · '+[...startupIssues].join('; '):'v0.7.16 TEST · Read-only');
-    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.16 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.23 · '+[...startupIssues].join('; '):'v0.7.23 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.23 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -1137,7 +1318,7 @@
   scan();
   watchValue(LISTINGS_KEY,refreshListing);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.7.16 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.23 · '+[...startupIssues].join('; '));
   watchValue(HISTORY_SOUND_KEY,updateHistorySound);
   document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
   window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);
