@@ -1,12 +1,14 @@
 # test: Property Assistant
 
-Made by Montana. Version 0.7.23, review build.
+Made by Montana. Version 0.7.26, review build.
 
 [Download / install the Tampermonkey script](https://raw.githubusercontent.com/TheOfficialsixx/test/main/enabledplus-property-assistant.test.user.js)
 
 Open the link with Tampermonkey installed, or save the file and import it into Tampermonkey. Disable older copies of Property Assistant before testing this version. It does not replace the separate historic or appointment-history tools.
 
 ## Features
+
+- Resizable full and compact rectangles with independent saved sizes, wrapping source results and subtle links to matching listings.
 
 - Canadian lead distance estimates from Mississauga, with Maps verification. The 150 km cutoff is Central GTA only, not Eastern GTA.
 - Read-only duplicate candidate lookup.
@@ -27,7 +29,7 @@ External sites may block requests or have no matching listing. Unavailable is no
 
 Address checks send the lead address to external search, housing, geocoding and routing services. Use only with company authorization. No customer records or credentials are included in this repository.
 
-Eighteen local test suites passed before upload. Synthetic browser testing covered rendering, notifications and saved sound settings. The synthetic testing page is not part of the installed script. Live-lead validation of this build remains pending; this is not a guarantee of live external-site availability.
+Nineteen local test suites passed before upload. Synthetic browser testing covered rendering, notifications and saved sound settings. The synthetic testing page is not part of the installed script. Live-lead validation of this build remains pending; this is not a guarantee of live external-site availability.
 
 To update on another PC, open the install link and accept the update in Tampermonkey, then refresh the lead tabs. Refreshing the lead alone does not install this update. Disable duplicate older Property Assistant copies.
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.7.23
+// @version      0.7.26
 // @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
@@ -544,7 +544,7 @@
     const style=document.createElement('style');style.id=ID+'-style';style.textContent=`
     #${ID} header .spa-heading{flex:1;min-width:0}#${ID} header small{display:block;font-size:11px;font-weight:400}#${ID} .spa-stop{display:block;color:#ff5555;font-weight:700;animation:spa-warning 2.4s ease-in-out infinite}#${ID}[data-over=true] header{border-bottom:2px solid #ff5555}@keyframes spa-warning{50%{opacity:.5}}@media(prefers-reduced-motion:reduce){#${ID} .spa-stop{animation:none}}
     #${ID}{position:fixed;right:16px;top:88px;width:320px;height:480px;min-width:245px;min-height:150px;max-width:calc(100vw - 12px);max-height:calc(100vh - 12px);resize:both;overflow:hidden;display:flex;flex-direction:column;z-index:999994;background:#282a36;color:#f8f8f2;border:1px solid #6272a4;border-radius:11px;box-shadow:0 12px 30px #0005;font:12px/1.45 'Segoe UI',sans-serif}
-    #${ID} *{box-sizing:border-box}#${ID} header{display:flex;align-items:center;gap:8px;padding:10px;background:#21222c;cursor:move;touch-action:none;user-select:none}#${ID} header strong{flex:1;color:#bd93f9}#${ID} main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px;scrollbar-color:#6272a4 #21222c}#${ID} section{margin-bottom:12px}#${ID} label{display:block;margin:6px 0;color:#c7c9d3}#${ID} input,#${ID} textarea,#${ID} select{width:100%;background:#21222c;color:#f8f8f2;border:1px solid #55596e;border-radius:5px;padding:6px;font:inherit}#${ID} textarea{resize:vertical;min-height:52px}#${ID} button,#${ID} a{background:#343746;color:#f8f8f2;border:1px solid #62667e;border-radius:6px;padding:5px 8px;cursor:pointer;font:inherit;text-decoration:none}#${ID} .row{display:flex;gap:6px;margin-top:7px}#${ID} .row>*{flex:1;min-width:0}#${ID} p{margin:5px 0}#${ID} small{color:#c7c9d3}#${ID} .status{padding:7px;border-left:3px solid #ffb86c;background:#21222c;border-radius:4px}#${ID} [data-tone=red]{border-color:#ff5555}#${ID} [data-tone=green]{border-color:#50fa7b}#${ID} details{margin-top:10px}#${ID} summary{cursor:pointer;color:#bd93f9}#${ID} footer{padding:7px 10px;background:#21222c;color:#c7c9d3}#${ID}[data-mini=true]{width:245px!important;height:auto!important;min-height:0;resize:none}#${ID}[data-mini=true] main,#${ID}[data-mini=true] footer{display:none}
+    #${ID} *{box-sizing:border-box}#${ID} header{display:flex;align-items:center;gap:8px;padding:10px;background:#21222c;cursor:move;touch-action:none;user-select:none}#${ID} header strong{flex:1;color:#bd93f9}#${ID} main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px;scrollbar-color:#6272a4 #21222c}#${ID} section{margin-bottom:12px}#${ID} label{display:block;margin:6px 0;color:#c7c9d3}#${ID} input,#${ID} textarea,#${ID} select{width:100%;background:#21222c;color:#f8f8f2;border:1px solid #55596e;border-radius:5px;padding:6px;font:inherit}#${ID} textarea{resize:vertical;min-height:52px}#${ID} button,#${ID} a{background:#343746;color:#f8f8f2;border:1px solid #62667e;border-radius:6px;padding:5px 8px;cursor:pointer;font:inherit;text-decoration:none}#${ID} .row{display:flex;gap:6px;margin-top:7px}#${ID} .row>*{flex:1;min-width:0}#${ID} p{margin:5px 0}#${ID} small{color:#c7c9d3}#${ID} .status{padding:7px;border-left:3px solid #ffb86c;background:#21222c;border-radius:4px}#${ID} [data-tone=red]{border-color:#ff5555}#${ID} [data-tone=green]{border-color:#50fa7b}#${ID} details{margin-top:10px}#${ID} summary{cursor:pointer;color:#bd93f9}#${ID} footer{padding:7px 10px;background:#21222c;color:#c7c9d3}#${ID}[data-mini=true]{min-height:0;resize:both}#${ID}[data-mini=true] main,#${ID}[data-mini=true] footer{display:none}
     #${ID}{border-color:#767096;border-radius:16px;background:#242432;min-width:min(245px,calc(100vw - 12px));font-size:13px}
     #${ID} header{position:relative;flex-shrink:0;isolation:isolate;min-height:60px;background:linear-gradient(125deg,#35304a,#242432);padding:12px;overflow:hidden}
     #${ID} header:before{content:'';position:absolute;pointer-events:none;z-index:-1;right:-22px;top:-28px;width:135px;height:135px;border-radius:50%;opacity:.19;background:repeating-linear-gradient(0deg,transparent 0 5px,#1a1130 5px 8px),linear-gradient(170deg,#ffc778,#ff4fbb 64%,#803bff);transform:rotate(-12deg)}
@@ -555,7 +555,7 @@
     #${ID} button,#${ID} a{min-height:30px;border-color:#777087;background:#3a354c;border-radius:8px}#${ID} button:hover,#${ID} a:hover{background:#4c4363}#${ID} .row{flex-wrap:wrap}#${ID} small{display:block;font-size:11px;line-height:1.5;color:#cecad8}
     #${ID} .status{margin:8px 0;overflow-wrap:anywhere;line-height:1.55}#${ID} [data-tone=red]{background:#36282f}#${ID} [data-tone=green]{background:#253630}
     #${ID} footer{display:flex;flex-shrink:0;align-items:center;gap:8px;padding:8px 10px;font-size:11px;border-top:1px solid #494559}#${ID} footer span{flex:1;overflow-wrap:anywhere}#${ID} footer button{flex-shrink:0;font-size:11px;padding:4px 7px}#${ID}[data-mini=true] header{padding:9px 11px}
-    #${ID}[data-mini=true]{width:270px!important;max-width:calc(100vw - 12px);border-radius:14px}
+    #${ID}[data-mini=true]{max-width:calc(100vw - 12px);border-radius:14px}
     #${ID}[data-mini=true] header{align-items:flex-start;padding:11px 12px}
     #${ID} header [data-action=mini]{width:28px;height:28px;flex-shrink:0;padding:0;border-radius:50%;background:#ffffff0c;border-color:#817398;color:#eee4ff}
     #${ID} #spa-territory-warning{font-size:10px;line-height:1.35;margin-top:7px;padding-top:6px;border-top:1px solid #ffffff20;color:#e7cca5}
@@ -640,12 +640,12 @@
     #${ID}[data-mini=true] header:after{height:26px;background-size:125px 26px}
     #${ID} #spa-version{display:block;font-size:10px;line-height:1.4;letter-spacing:.04em;color:var(--spa-muted);margin-bottom:3px}
     #${ID} #spa-compact{display:none}
-    #${ID}[data-mini=true]:not([data-bubble=true]){width:224px!important;min-width:180px;border-radius:12px}
+    #${ID}[data-mini=true]:not([data-bubble=true]){min-width:min(190px,calc(100vw - 12px));min-height:min(150px,calc(100vh - 12px));border-radius:12px;resize:both}
     #${ID}[data-mini=true] header{padding:8px;min-height:0;gap:5px}
     #${ID}[data-mini=true] header:after{display:block}
     #${ID}[data-mini=true] .spa-heading>:not(#spa-version):not(#spa-compact){display:none!important}
     #${ID}[data-mini=true] #spa-compact{display:block;min-width:0}
-    #${ID} #spa-compact strong,#${ID} #spa-compact small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #${ID} #spa-compact strong,#${ID} #spa-compact small{display:block;max-width:100%;min-width:0;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere}
     #${ID} #spa-compact strong{font-size:12px;line-height:1.4}
     #${ID} #spa-compact small{font-size:10px;line-height:1.5}
     #${ID} #spa-compact .spa-compact-alert{color:var(--spa-danger)}
@@ -740,6 +740,26 @@
     #${ID} #spa-sound-switch[aria-checked=true] i{transform:translateX(35px)}
     #${ID}[data-bubble=true] #spa-sound-bar{display:none}
     @media(prefers-reduced-motion:reduce){#${ID} #spa-sound-switch i{transition:none}}
+    /* Both rectangular modes resize; typography grows within readable limits. */
+    #${ID}:not([data-bubble=true]){resize:both}
+    #${ID}[data-mini=true]:not([data-bubble=true]) header{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;align-content:start}
+    #${ID} main{font-size:clamp(13px,3.8cqi,16px)}
+    #${ID}[data-density=large] main{font-size:clamp(16px,4.4cqi,19px)}
+    #${ID} main small{font-size:clamp(11px,3.1cqi,14px)}
+    #${ID}[data-density=large] main small{font-size:clamp(14px,3.8cqi,17px)}
+    #${ID}[data-mini=true] #spa-compact strong{font-size:clamp(13px,5.5cqi,18px);white-space:normal;overflow-wrap:anywhere}
+    #${ID}[data-mini=true] #spa-compact small{font-size:clamp(11px,4.6cqi,15px);white-space:normal;overflow-wrap:anywhere}
+    #${ID}[data-mini=true][data-density=large] #spa-compact strong{font-size:clamp(16px,6cqi,20px)}
+    #${ID}[data-mini=true][data-density=large] #spa-compact small{font-size:clamp(14px,5cqi,17px)}
+    #${ID} header button{align-self:start}
+    #${ID}[data-short=true]:not([data-mini=true]) header{max-height:28%}
+    #${ID}[data-short=true] footer #spa-notice,#${ID}[data-short=true] footer #spa-credit{display:none}
+    #${ID}[data-short=true] .spa-settings-body{max-height:32px}
+    #${ID}[data-short=true] footer{padding:3px 6px}
+    #${ID} #spa-sound-bar{padding-right:18px}
+    #${ID} #spa-compact .spa-source-link{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;white-space:normal;overflow-wrap:anywhere}
+    #${ID} #spa-compact .spa-source-link:hover{color:var(--spa-accent);background:transparent}
+    #${ID} #spa-compact .spa-source-link:focus-visible{outline:2px solid var(--spa-accent);outline-offset:2px}
     @container (max-width:360px){
       #${ID} main,#${ID} .spa-section-body{padding:7px}
       #${ID} .row{flex-direction:column}
@@ -764,13 +784,13 @@
   function viewportBounds(width,height){
     return {width:Math.max(1,width-12),height:Math.max(1,height-12)};
   }
-  function clamp(){const bounds=viewportBounds(innerWidth,innerHeight);panel.style.maxWidth=bounds.width+'px';panel.style.maxHeight=bounds.height+'px';const r=panel.getBoundingClientRect();panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
-  function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,minimized,bubble:panel.dataset.bubble==='true'}));}catch{}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);panel.dataset.bubble=String(s.bubble===true);panel.dataset.mini=String(s.minimized===true||s.bubble===true);panel.style.right='auto';miniLabel();clamp();}catch{}}
+  function clamp(){const bounds=viewportBounds(innerWidth,innerHeight);panel.style.maxWidth=bounds.width+'px';panel.style.maxHeight=bounds.height+'px';const r=panel.getBoundingClientRect();panel.dataset.short=String(r.height<350);panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
+  function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,compactWidth:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.width:Number(panel.dataset.cw)||224,compactHeight:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.height:Number(panel.dataset.ch)||220,minimized,bubble:panel.dataset.bubble==='true'}));}catch{}}
+  function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);panel.dataset.cw=String(s.compactWidth||224);panel.dataset.ch=String(s.compactHeight||220);panel.dataset.bubble=String(s.bubble===true);panel.dataset.mini=String(s.minimized===true||s.bubble===true);if(s.minimized===true&&!s.bubble){panel.style.width=panel.dataset.cw+'px';panel.style.height=panel.dataset.ch+'px';}panel.style.right='auto';miniLabel();clamp();}catch{}}
   function setPanelMode(mode){
-    const r=panel.getBoundingClientRect();if(panel.dataset.mini!=='true'){panel.dataset.w=String(r.width);panel.dataset.h=String(r.height);}
+    const r=panel.getBoundingClientRect();if(panel.dataset.mini!=='true'){panel.dataset.w=String(r.width);panel.dataset.h=String(r.height);}else if(panel.dataset.bubble!=='true'){panel.dataset.cw=String(r.width);panel.dataset.ch=String(r.height);}
     panel.dataset.bubble=String(mode==='bubble');panel.dataset.mini=String(mode!=='full');
-    if(mode==='full'){panel.style.width=(Number(panel.dataset.w)||320)+'px';panel.style.height=(Number(panel.dataset.h)||480)+'px';}
+    if(mode==='full'){panel.style.width=(Number(panel.dataset.w)||320)+'px';panel.style.height=(Number(panel.dataset.h)||480)+'px';}else if(mode==='compact'){panel.style.width=(Number(panel.dataset.cw)||224)+'px';panel.style.height=(Number(panel.dataset.ch)||220)+'px';}
     miniLabel();clamp();save();updateQuickBubble();
   }
   function quickBubbleState(current,history,distance,mobile){
@@ -786,6 +806,20 @@
     const labels={'Single family home':'Single family',Townhouse:'Townhouse',Condo:'Condo'};
     if(types.length!==1||!labels[types[0]])return base;
     return {...base,label:'✓',unit:labels[types[0]],target:'spa-extracted',tone:base.count?'alert':unitReview?'unit':'verified',unitReview:!!unitReview,verified:true};
+  }
+  function compactPropertySources(records,check,now=Date.now()){
+    const fresh=records.filter(r=>Number.isFinite(r.readAt)&&now>=r.readAt&&now-r.readAt<LISTING_TTL&&['Zillow','Redfin','Realtor.com'].includes(r.source));
+    const lines=[...new Set(fresh.map(r=>r.source+' — '+propertyLabel(r.type)))];
+    if(lines.length)return lines.join('\n')+(check?.warning?'\n'+check.warning:'');
+    return check?.warning||(/Checking/.test(check?.label||'')?'Checking property websites…':'Property websites: not verified');
+  }
+  function compactSourceLinks(records,check,now=Date.now()){
+    return compactPropertySources(records,check,now).split('\n').map(line=>{
+      const record=records.find(r=>r.source+' — '+propertyLabel(r.type)===line&&Number.isFinite(r.readAt)&&now>=r.readAt&&now-r.readAt<LISTING_TTL&&listingSource(r.url)===r.source);
+      if(!record)return esc(line);
+      const url=new URL(record.url);if(url.username||url.password)return esc(line);
+      return '<a class="spa-source-link" href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer" title="Open matching '+esc(record.source)+' listing">'+esc(line)+'</a>';
+    }).join('<br>');
   }
   function compactSummary(current,distance,property,mobile,historyCount,flagCount,preferences={}){
     if(!current)return {title:'Waiting for lead',detail:'No lead loaded',alert:''};
@@ -805,9 +839,11 @@
     const compact=panel.querySelector('#spa-compact');
     if(compact){
       const flags=panel.querySelectorAll('.spa-section-flag:not([hidden])').length;
-      const info=compactSummary(lead,lead?distances.get(distanceKey()):null,lead?.propertyCheck?.label||listingType||(lead?.type?lead.type+' (lead)':''),mobile,history.rows.length,lead?flags:0,displayPreferences(savedValue('sixx-property-display-v1',{})));
-      compact.innerHTML='<strong>'+esc(info.title)+'</strong><small>'+esc(info.detail)+'</small>'+(info.alert?'<small class="spa-compact-alert">'+esc(info.alert)+'</small>':'');
-      compact.title=[info.title,info.detail,info.alert,'Restore for full details. Not confirmation clearance.'].filter(Boolean).join(' · ');
+      const prefs=displayPreferences(savedValue('sixx-property-display-v1',{}));
+      const sources=lead&&prefs.property?compactPropertySources(matchedListings,lead.propertyCheck):'';
+      const info=compactSummary(lead,lead?distances.get(distanceKey()):null,'',mobile,history.rows.length,lead?flags:0,{...prefs,property:false});
+      compact.innerHTML='<strong>'+esc(info.title)+'</strong><small>'+esc(info.detail)+'</small>'+(sources?'<small class="spa-compact-sources">'+compactSourceLinks(matchedListings,lead.propertyCheck)+'</small>':'')+(info.alert?'<small class="spa-compact-alert">'+esc(info.alert)+'</small>':'');
+      compact.title=[info.title,info.detail,sources,info.alert,'Restore for full details. Not confirmation clearance.'].filter(Boolean).join(' · ');
     }
     const summary=[lead?.name||'Waiting for lead',lead?.region||'',state.verified?'Property type read from a matching listing: '+state.unit:'',state.unitReview?'Check whether a unit number applies. Condos and townhouses do not always have one.':'',mobile?'Mobile/manufactured home: review required':'',history.rows.length+' history results needing review',guidance,panel.querySelector('#spa-title')?.textContent||'',panel.querySelector('#spa-subtitle')?.textContent||'','Open details. This indicator is not confirmation clearance.'].filter(Boolean).join(' · ');
     button.dataset.tone=state.tone;button.dataset.target=state.target;button.dataset.mobile=String(!!state.mobile);
@@ -896,12 +932,12 @@
   }
   function safeIssueReport(){
     // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
-    return ['Property Assistant v0.7.23','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+    return ['Property Assistant v0.7.26','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
   }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
   function notice(text){panel.querySelector('#spa-notice').textContent=text;}
-  function resetLayout(){panel.dataset.bubble='false';panel.dataset.mini='false';panel.dataset.w='320';panel.dataset.h='480';panel.style.width='320px';panel.style.height='480px';panel.style.left=Math.max(6,innerWidth-336)+'px';panel.style.top=Math.min(88,Math.max(6,innerHeight-492))+'px';miniLabel();clamp();save();notice('Layout reset. Your results are unchanged.');}
+  function resetLayout(){panel.dataset.bubble='false';panel.dataset.mini='false';panel.dataset.w='320';panel.dataset.h='480';panel.dataset.cw='224';panel.dataset.ch='220';panel.style.width='320px';panel.style.height='480px';panel.style.left=Math.max(6,innerWidth-336)+'px';panel.style.top=Math.min(88,Math.max(6,innerHeight-492))+'px';miniLabel();clamp();save();notice('Layout reset. Your results are unchanged.');}
   function refreshRoute(){
     if(!panel||!lead||!canadianLead(lead))return;
     const field=panel.querySelector('#spa-km');if(!field)return;
@@ -1071,7 +1107,7 @@
     const unitButton=panel.querySelector('#spa-unit-reviewed');if(unitButton){unitButton.hidden=!(warning.show||acknowledged);unitButton.textContent=acknowledged?'No unit applies · Undo':'Checked: no unit applies';}
   }
   // Made by Montana. Preserve creator credit when reviewing this interface.
-  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.23</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
+  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.26</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
     const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
     panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
@@ -1131,7 +1167,7 @@
       button.append(colors,document.createTextNode(t.label));button.onclick=()=>{applyTheme(key);saveValue(THEME_KEY,key);};swatches.append(button);
     }
     themeLabel.after(favorite,gallery);
-    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.23 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
+    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.26 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
     const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
     const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
     const soundBar=document.createElement('div');soundBar.id='spa-sound-bar';
@@ -1140,7 +1176,7 @@
     const header=panel.querySelector('header');
     const settingsShortcut=document.createElement('button');settingsShortcut.textContent='⚙';settingsShortcut.title='Settings';settingsShortcut.setAttribute('aria-label','Open settings');
     settingsShortcut.onclick=()=>{setPanelMode('full');settings.open=!settings.open;if(settings.open)settingsTitle.focus();};header.append(settingsShortcut);
-    header.onpointerdown=e=>{if(e.button!==0||e.target.closest('button'))return;const r=panel.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;header.setPointerCapture(e.pointerId);header.onpointermove=m=>{panel.style.left=m.clientX-x+'px';panel.style.top=m.clientY-y+'px';panel.style.right='auto';clamp();};header.onpointerup=header.onpointercancel=()=>{header.onpointermove=null;save();};};
+    header.onpointerdown=e=>{if(e.button!==0||e.target.closest('button,a'))return;const r=panel.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;header.setPointerCapture(e.pointerId);header.onpointermove=m=>{panel.style.left=m.clientX-x+'px';panel.style.top=m.clientY-y+'px';panel.style.right='auto';clamp();};header.onpointerup=header.onpointercancel=()=>{header.onpointermove=null;save();};};
     panel.querySelector('[data-action=mini]').onclick=()=>setPanelMode(panel.dataset.mini==='true'?'full':'compact');
     const bubbleShortcut=document.createElement('button');bubbleShortcut.textContent='○';bubbleShortcut.title='Bubble mode';bubbleShortcut.setAttribute('aria-label','Bubble mode');bubbleShortcut.onclick=()=>setPanelMode('bubble');header.append(bubbleShortcut);
     const quick=document.createElement('button');quick.id='spa-quick-bubble';panel.append(quick);
@@ -1237,8 +1273,8 @@
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.7.23 · '+[...startupIssues].join('; '):'v0.7.23 TEST · Read-only');
-    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.23 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.26 · '+[...startupIssues].join('; '):'v0.7.26 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.26 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -1318,7 +1354,7 @@
   scan();
   watchValue(LISTINGS_KEY,refreshListing);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.7.23 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.26 · '+[...startupIssues].join('; '));
   watchValue(HISTORY_SOUND_KEY,updateHistorySound);
   document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
   window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);
