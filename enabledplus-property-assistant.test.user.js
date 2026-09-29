@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.7.26
+// @version      0.7.27
 // @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
@@ -640,7 +640,7 @@
     #${ID}[data-mini=true] header:after{height:26px;background-size:125px 26px}
     #${ID} #spa-version{display:block;font-size:10px;line-height:1.4;letter-spacing:.04em;color:var(--spa-muted);margin-bottom:3px}
     #${ID} #spa-compact{display:none}
-    #${ID}[data-mini=true]:not([data-bubble=true]){min-width:min(190px,calc(100vw - 12px));min-height:min(150px,calc(100vh - 12px));border-radius:12px;resize:both}
+    #${ID}[data-mini=true]:not([data-bubble=true]){min-width:min(170px,calc(100vw - 12px));min-height:min(120px,calc(100vh - 12px));border-radius:12px;resize:both}
     #${ID}[data-mini=true] header{padding:8px;min-height:0;gap:5px}
     #${ID}[data-mini=true] header:after{display:block}
     #${ID}[data-mini=true] .spa-heading>:not(#spa-version):not(#spa-compact){display:none!important}
@@ -758,6 +758,16 @@
     #${ID}[data-short=true] footer{padding:3px 6px}
     #${ID} #spa-sound-bar{padding-right:18px}
     #${ID} #spa-compact .spa-source-link{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;white-space:normal;overflow-wrap:anywhere}
+    /* Smaller compact rectangle; preserve artwork, scrolling and large-text preference. */
+    #${ID}[data-mini=true]:not([data-bubble=true]) header{grid-template-columns:1fr repeat(3,24px);padding:5px;gap:3px}
+    #${ID}[data-mini=true] header>button{width:24px;height:24px;min-height:24px}
+    #${ID}[data-mini=true][data-theme] header:after{height:20px;min-height:20px;background-size:auto 20px}
+    #${ID}[data-mini=true] #spa-compact{line-height:1.25}
+    #${ID}[data-mini=true] #spa-compact strong{font-size:clamp(12px,5cqi,16px);line-height:1.25}
+    #${ID}[data-mini=true] #spa-compact small{font-size:clamp(11px,4.4cqi,13px);line-height:1.25;margin-top:2px}
+    #${ID}[data-mini=true][data-density=large] #spa-compact strong{font-size:16px}
+    #${ID}[data-mini=true][data-density=large] #spa-compact small{font-size:14px}
+    #${ID}[data-mini=true] #spa-sound-bar{padding:2px 18px 2px 6px;gap:4px}
     #${ID} #spa-compact .spa-source-link:hover{color:var(--spa-accent);background:transparent}
     #${ID} #spa-compact .spa-source-link:focus-visible{outline:2px solid var(--spa-accent);outline-offset:2px}
     @container (max-width:360px){
@@ -785,12 +795,12 @@
     return {width:Math.max(1,width-12),height:Math.max(1,height-12)};
   }
   function clamp(){const bounds=viewportBounds(innerWidth,innerHeight);panel.style.maxWidth=bounds.width+'px';panel.style.maxHeight=bounds.height+'px';const r=panel.getBoundingClientRect();panel.dataset.short=String(r.height<350);panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
-  function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,compactWidth:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.width:Number(panel.dataset.cw)||224,compactHeight:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.height:Number(panel.dataset.ch)||220,minimized,bubble:panel.dataset.bubble==='true'}));}catch{}}
-  function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);panel.dataset.cw=String(s.compactWidth||224);panel.dataset.ch=String(s.compactHeight||220);panel.dataset.bubble=String(s.bubble===true);panel.dataset.mini=String(s.minimized===true||s.bubble===true);if(s.minimized===true&&!s.bubble){panel.style.width=panel.dataset.cw+'px';panel.style.height=panel.dataset.ch+'px';}panel.style.right='auto';miniLabel();clamp();}catch{}}
+  function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,compactWidth:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.width:Number(panel.dataset.cw)||210,compactHeight:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.height:Number(panel.dataset.ch)||170,minimized,bubble:panel.dataset.bubble==='true'}));}catch{}}
+  function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);const oldDefault=s.compactWidth===224&&s.compactHeight===220;panel.dataset.cw=String(oldDefault?210:s.compactWidth||210);panel.dataset.ch=String(oldDefault?170:s.compactHeight||170);panel.dataset.bubble=String(s.bubble===true);panel.dataset.mini=String(s.minimized===true||s.bubble===true);if(s.minimized===true&&!s.bubble){panel.style.width=panel.dataset.cw+'px';panel.style.height=panel.dataset.ch+'px';}panel.style.right='auto';miniLabel();clamp();}catch{}}
   function setPanelMode(mode){
     const r=panel.getBoundingClientRect();if(panel.dataset.mini!=='true'){panel.dataset.w=String(r.width);panel.dataset.h=String(r.height);}else if(panel.dataset.bubble!=='true'){panel.dataset.cw=String(r.width);panel.dataset.ch=String(r.height);}
     panel.dataset.bubble=String(mode==='bubble');panel.dataset.mini=String(mode!=='full');
-    if(mode==='full'){panel.style.width=(Number(panel.dataset.w)||320)+'px';panel.style.height=(Number(panel.dataset.h)||480)+'px';}else if(mode==='compact'){panel.style.width=(Number(panel.dataset.cw)||224)+'px';panel.style.height=(Number(panel.dataset.ch)||220)+'px';}
+    if(mode==='full'){panel.style.width=(Number(panel.dataset.w)||320)+'px';panel.style.height=(Number(panel.dataset.h)||480)+'px';}else if(mode==='compact'){panel.style.width=(Number(panel.dataset.cw)||210)+'px';panel.style.height=(Number(panel.dataset.ch)||170)+'px';}
     miniLabel();clamp();save();updateQuickBubble();
   }
   function quickBubbleState(current,history,distance,mobile){
@@ -932,12 +942,12 @@
   }
   function safeIssueReport(){
     // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
-    return ['Property Assistant v0.7.26','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+    return ['Property Assistant v0.7.27','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
   }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
   function notice(text){panel.querySelector('#spa-notice').textContent=text;}
-  function resetLayout(){panel.dataset.bubble='false';panel.dataset.mini='false';panel.dataset.w='320';panel.dataset.h='480';panel.dataset.cw='224';panel.dataset.ch='220';panel.style.width='320px';panel.style.height='480px';panel.style.left=Math.max(6,innerWidth-336)+'px';panel.style.top=Math.min(88,Math.max(6,innerHeight-492))+'px';miniLabel();clamp();save();notice('Layout reset. Your results are unchanged.');}
+  function resetLayout(){panel.dataset.bubble='false';panel.dataset.mini='false';panel.dataset.w='320';panel.dataset.h='480';panel.dataset.cw='210';panel.dataset.ch='170';panel.style.width='320px';panel.style.height='480px';panel.style.left=Math.max(6,innerWidth-336)+'px';panel.style.top=Math.min(88,Math.max(6,innerHeight-492))+'px';miniLabel();clamp();save();notice('Layout reset. Your results are unchanged.');}
   function refreshRoute(){
     if(!panel||!lead||!canadianLead(lead))return;
     const field=panel.querySelector('#spa-km');if(!field)return;
@@ -1107,7 +1117,7 @@
     const unitButton=panel.querySelector('#spa-unit-reviewed');if(unitButton){unitButton.hidden=!(warning.show||acknowledged);unitButton.textContent=acknowledged?'No unit applies · Undo':'Checked: no unit applies';}
   }
   // Made by Montana. Preserve creator credit when reviewing this interface.
-  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.26</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
+  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.27</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
     const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
     panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
@@ -1167,7 +1177,7 @@
       button.append(colors,document.createTextNode(t.label));button.onclick=()=>{applyTheme(key);saveValue(THEME_KEY,key);};swatches.append(button);
     }
     themeLabel.after(favorite,gallery);
-    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.26 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
+    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.27 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
     const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
     const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
     const soundBar=document.createElement('div');soundBar.id='spa-sound-bar';
@@ -1273,8 +1283,8 @@
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.7.26 · '+[...startupIssues].join('; '):'v0.7.26 TEST · Read-only');
-    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.26 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.27 · '+[...startupIssues].join('; '):'v0.7.27 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.27 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -1354,7 +1364,7 @@
   scan();
   watchValue(LISTINGS_KEY,refreshListing);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.7.26 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.27 · '+[...startupIssues].join('; '));
   watchValue(HISTORY_SOUND_KEY,updateHistorySound);
   document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
   window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);

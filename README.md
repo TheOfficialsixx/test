@@ -1,6 +1,6 @@
 # test: Property Assistant
 
-Made by Montana. Version 0.7.26, review build.
+Made by Montana. Version 0.7.27, review build.
 
 [Download / install the Tampermonkey script](https://raw.githubusercontent.com/TheOfficialsixx/test/main/enabledplus-property-assistant.test.user.js)
 
@@ -8,7 +8,7 @@ Open the link with Tampermonkey installed, or save the file and import it into T
 
 ## Features
 
-- Resizable full and compact rectangles with independent saved sizes, wrapping source results and subtle links to matching listings.
+- Smaller compact rectangle: 210 × 170 default, resizable down to 170 × 120, with tighter controls and preserved theme artwork. Full and compact views retain independent saved sizes, wrapping source results and subtle links to matching listings.
 
 - Canadian lead distance estimates from Mississauga, with Maps verification. The 150 km cutoff is Central GTA only, not Eastern GTA.
 - Read-only duplicate candidate lookup.
