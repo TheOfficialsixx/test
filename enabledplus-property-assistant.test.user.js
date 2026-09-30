@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.7.27
+// @version      0.7.29
 // @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
@@ -498,7 +498,7 @@
     const soundLabel=panel?.querySelector('#spa-sound-label');if(soundLabel)soundLabel.textContent=historySoundEnabled()?'Sound on':'Muted';
     if(ack){ack.hidden=!historyAlarmKey;ack.disabled=historyAlarmKey===historyAcknowledged;ack.textContent=ack.disabled?'Acknowledged':'Acknowledge';}
     if(!historySoundAllowed()){stopHistorySound();return;}
-    if(historySoundTimer===null){historyBeep();historySoundTimer=setInterval(historyBeep,2500);}
+    if(historySoundTimer===null){historyBeep();historySoundTimer=setInterval(historyBeep,1800);}
   }
   function setHistoryAlarm(key){if(key!==historyAlarmKey){stopHistorySound();historyAlarmKey=key;historyAcknowledged='';}updateHistorySound();}
   async function unlockHistorySound(){
@@ -770,6 +770,24 @@
     #${ID}[data-mini=true] #spa-sound-bar{padding:2px 18px 2px 6px;gap:4px}
     #${ID} #spa-compact .spa-source-link:hover{color:var(--spa-accent);background:transparent}
     #${ID} #spa-compact .spa-source-link:focus-visible{outline:2px solid var(--spa-accent);outline-offset:2px}
+    #${ID} #spa-notification-badge{position:absolute;left:5px;top:5px;width:26px;height:24px;min-height:24px;padding:0;border-radius:20px;background:var(--spa-button);color:var(--spa-text);border:1px solid var(--spa-border);font-size:11px;z-index:2}
+    #${ID} #spa-notification-badge[data-attention=true]:after{content:'';position:absolute;width:7px;height:7px;top:-2px;right:-2px;border-radius:50%;background:#ff647c;animation:spa-notification-dot 2s ease-in-out infinite}
+    #${ID} #spa-version{padding-left:30px;min-height:24px}
+    #${ID}[data-motion=steady] #spa-notification-badge:after{animation:none}
+    @media(prefers-reduced-motion:reduce){#${ID} #spa-notification-badge:after{animation:none}}
+    #${ID}-notifications{position:fixed;z-index:999994;box-sizing:border-box;width:310px;max-width:calc(100vw - 12px);max-height:calc(100vh - 12px);display:flex;flex-direction:column;overflow:hidden;background:var(--spa-surface);color:var(--spa-text);border:1px solid var(--spa-border);border-radius:12px;box-shadow:0 8px 24px #0005;font:12px/1.4 'Segoe UI',sans-serif}
+    #${ID}-notifications[hidden]{display:none}
+    #${ID}-notifications *{box-sizing:border-box}
+    #${ID}-notifications .spa-inbox-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;background:var(--spa-header);flex-shrink:0}
+    #${ID}-notifications .spa-inbox-head strong{flex:1}
+    #${ID}-notifications button{background:var(--spa-button);color:var(--spa-text);border:1px solid var(--spa-border);border-radius:6px;padding:4px 7px;cursor:pointer;font:inherit}
+    #${ID}-notifications button:focus-visible{outline:2px solid var(--spa-accent);outline-offset:1px}
+    #${ID}-notifications .spa-inbox-list{overflow-y:auto;min-height:0;overscroll-behavior:contain;padding:6px}
+    #${ID}-notifications article{padding:8px;border-bottom:1px solid var(--spa-border);overflow-wrap:anywhere}
+    #${ID}-notifications article>button[data-dismiss]{float:right;margin-left:4px}
+    #${ID}-notifications article small{display:block;white-space:pre-line;color:var(--spa-muted)}
+    #${ID}-notifications p{margin:6px 0}
+    #${ID}-notifications .spa-inbox-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
     @container (max-width:360px){
       #${ID} main,#${ID} .spa-section-body{padding:7px}
       #${ID} .row{flex-direction:column}
@@ -794,7 +812,7 @@
   function viewportBounds(width,height){
     return {width:Math.max(1,width-12),height:Math.max(1,height-12)};
   }
-  function clamp(){const bounds=viewportBounds(innerWidth,innerHeight);panel.style.maxWidth=bounds.width+'px';panel.style.maxHeight=bounds.height+'px';const r=panel.getBoundingClientRect();panel.dataset.short=String(r.height<350);panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
+  function clamp(){const bounds=viewportBounds(innerWidth,innerHeight);panel.style.maxWidth=bounds.width+'px';panel.style.maxHeight=bounds.height+'px';for(const k of ['width','height']){const value=parseFloat(panel.style[k]);if(Number.isFinite(value)&&value>bounds[k])panel.style[k]=bounds[k]+'px';}const r=panel.getBoundingClientRect();panel.dataset.short=String(r.height<350);panel.style.left=Math.max(6,Math.min(r.left,innerWidth-r.width-6))+'px';panel.style.top=Math.max(6,Math.min(r.top,innerHeight-r.height-6))+'px';panel.style.right='auto';}
   function save(){if(windowSync)return;const r=panel.getBoundingClientRect();const minimized=panel.dataset.mini==='true';try{localStorage.setItem(KEY,JSON.stringify({left:r.left,top:r.top,width:minimized?Number(panel.dataset.w):r.width,height:minimized?Number(panel.dataset.h):r.height,compactWidth:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.width:Number(panel.dataset.cw)||210,compactHeight:panel.dataset.mini==='true'&&panel.dataset.bubble!=='true'?r.height:Number(panel.dataset.ch)||170,minimized,bubble:panel.dataset.bubble==='true'}));}catch{}}
   function restore(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(!s)return;for(const k of ['left','top','width','height'])if(Number.isFinite(s[k]))panel.style[k]=s[k]+'px';panel.dataset.w=String(s.width||320);panel.dataset.h=String(s.height||480);const oldDefault=s.compactWidth===224&&s.compactHeight===220;panel.dataset.cw=String(oldDefault?210:s.compactWidth||210);panel.dataset.ch=String(oldDefault?170:s.compactHeight||170);panel.dataset.bubble=String(s.bubble===true);panel.dataset.mini=String(s.minimized===true||s.bubble===true);if(s.minimized===true&&!s.bubble){panel.style.width=panel.dataset.cw+'px';panel.style.height=panel.dataset.ch+'px';}panel.style.right='auto';miniLabel();clamp();}catch{}}
   function setPanelMode(mode){
@@ -841,6 +859,7 @@
   }
   function updateQuickBubble(){
     const button=panel?.querySelector('#spa-quick-bubble');if(!button)return;
+    if(!lead)updateNotifications([]);
     const history=lead?readAppointmentHistory():{rows:[]};
     const mobile=!!lead&&(manufacturedType(lead.type)||manufacturedType(listingType)||matchedListings.some(r=>manufacturedType(r.type+' '+r.style)));
     const unitReview=!!lead&&unitWarning(panel.querySelector('#spa-address')?.value||lead.address,lead.type,listingType,matchedListings.map(r=>r.type).join(' / '),lead.condoHint).show&&!unitAcknowledgments.has(unitReviewKey());
@@ -852,6 +871,8 @@
       const prefs=displayPreferences(savedValue('sixx-property-display-v1',{}));
       const sources=lead&&prefs.property?compactPropertySources(matchedListings,lead.propertyCheck):'';
       const info=compactSummary(lead,lead?distances.get(distanceKey()):null,'',mobile,history.rows.length,lead?flags:0,{...prefs,property:false});
+      const firstIssue=panel.querySelector('#spa-workflow strong')?.textContent?.replace(/^Next action · /,'');
+      if(!mobile&&flags&&firstIssue)info.alert=firstIssue+(flags>1?' · +'+(flags-1)+' sections':'');
       compact.innerHTML='<strong>'+esc(info.title)+'</strong><small>'+esc(info.detail)+'</small>'+(sources?'<small class="spa-compact-sources">'+compactSourceLinks(matchedListings,lead.propertyCheck)+'</small>':'')+(info.alert?'<small class="spa-compact-alert">'+esc(info.alert)+'</small>':'');
       compact.title=[info.title,info.detail,sources,info.alert,'Restore for full details. Not confirmation clearance.'].filter(Boolean).join(' · ');
     }
@@ -867,6 +888,58 @@
   }
   // Made by Montana. Review is session-only, never eligibility clearance or a company-record edit.
   let reviewedWorkflowKey='';
+  // Session-only inbox review never changes company records or erases underlying warnings.
+  const dismissedNotifications=new Set();
+  let notificationItems=[],notificationLead='',notificationTray=null,notificationRetryAt=0;
+  function notificationKey(id,item){return JSON.stringify([id,item.kind,item.title,item.target,item.evidence]);}
+  function positionNotifications(){
+    if(!notificationTray||notificationTray.hidden||!panel)return;
+    const r=panel.getBoundingClientRect(),height=Math.min(420,innerHeight-12);
+    notificationTray.style.maxHeight=Math.max(80,height)+'px';
+    notificationTray.style.left=Math.max(6,Math.min(r.left,innerWidth-322))+'px';
+    notificationTray.style.top=Math.max(6,Math.min(r.top+34,innerHeight-height-6))+'px';
+    for(const key of ['surface','text','border','header','button','accent','muted'])notificationTray.style.setProperty('--spa-'+key,panel.style.getPropertyValue('--spa-'+key));
+  }
+  function updateNotifications(items){
+    const id=lead?.id||'';
+    if(id!==notificationLead){dismissedNotifications.clear();notificationLead=id;if(notificationTray)notificationTray.hidden=true;}
+    notificationItems=items;
+    const visible=items.filter(item=>!dismissedNotifications.has(notificationKey(id,item)));
+    const badge=panel?.querySelector('#spa-notification-badge');
+    if(badge){badge.textContent=visible.length?String(Math.min(visible.length,99)):'✓';badge.dataset.attention=String(visible.length>0);badge.setAttribute('aria-label','Notifications: '+visible.length+' unreviewed flags');badge.setAttribute('aria-expanded',String(!!notificationTray&&!notificationTray.hidden));badge.title='Notifications · '+visible.length+' unreviewed';}
+    if(!notificationTray)return;
+    positionNotifications();
+    for(const button of notificationTray.querySelectorAll('[data-notification-recheck]'))button.disabled=Date.now()<notificationRetryAt;
+    const sound=notificationTray.querySelector('[data-inbox-sound]');if(sound){sound.textContent=historySoundEnabled()?'Mute':'Unmute';sound.setAttribute('aria-pressed',String(historySoundEnabled()));}
+    const fingerprint=JSON.stringify([id,items,[...dismissedNotifications]]);
+    if(notificationTray.dataset.content===fingerprint)return;
+    notificationTray.dataset.content=fingerprint;
+    const list=notificationTray.querySelector('.spa-inbox-list'),scroll=list.scrollTop;
+    list.innerHTML=visible.length?items.map((item,index)=>dismissedNotifications.has(notificationKey(id,item))?'':'<article><button type="button" data-dismiss="'+index+'" aria-label="Dismiss '+esc(item.title)+' for this visit" title="Reviewed, not fixed">×</button><strong>'+esc(item.title)+'</strong><p>'+esc(item.text)+'</p><small>'+String(item.evidence||'').split('\n').map(esc).join('<br>')+'</small><div class="spa-inbox-actions"><button type="button" data-notification-open="'+index+'">Details</button><button type="button" data-notification-recheck="'+index+'">Recheck</button></div></article>').join(''):'<p>No unreviewed notifications. Dismissed flags may still need action; this is not confirmation clearance.</p>';
+    list.scrollTop=scroll;
+    for(const button of notificationTray.querySelectorAll('[data-notification-recheck]'))button.disabled=Date.now()<notificationRetryAt;
+    notificationTray.querySelector('[data-show-dismissed]').hidden=!dismissedNotifications.size;
+  }
+  function setupNotifications(header){
+    const badge=document.createElement('button');badge.id='spa-notification-badge';badge.type='button';badge.setAttribute('aria-label','Notifications: 0 unreviewed flags');badge.setAttribute('aria-expanded','false');badge.textContent='✓';header.append(badge);
+    document.getElementById(ID+'-notifications')?.remove();
+    notificationTray=document.createElement('aside');notificationTray.id=ID+'-notifications';notificationTray.hidden=true;notificationTray.setAttribute('aria-label','Lead notifications');
+    notificationTray.innerHTML='<div class="spa-inbox-head"><strong>Notifications</strong><button type="button" data-inbox-sound aria-label="Toggle alert sound">Unmute</button><button type="button" data-show-dismissed hidden>Show dismissed</button><button type="button" data-close-inbox aria-label="Close notifications">×</button></div><div class="spa-inbox-list" tabindex="0"></div>';
+    document.body.append(notificationTray);
+    const close=()=>{notificationTray.hidden=true;badge.setAttribute('aria-expanded','false');badge.focus();};
+    badge.onclick=()=>{notificationTray.hidden=!notificationTray.hidden;updateNotifications(notificationItems);positionNotifications();if(!notificationTray.hidden)notificationTray.querySelector('[data-close-inbox]').focus();};
+    notificationTray.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+    notificationTray.onclick=e=>{
+      if(e.target.closest('[data-close-inbox]')){close();return;}
+      if(e.target.closest('[data-inbox-sound]')){panel.querySelector('#spa-sound-switch').click();updateNotifications(notificationItems);return;}
+      if(e.target.closest('[data-show-dismissed]')){dismissedNotifications.clear();updateNotifications(notificationItems);return;}
+      const dismiss=e.target.closest('[data-dismiss]'),open=e.target.closest('[data-notification-open]'),recheck=e.target.closest('[data-notification-recheck]');
+      if(dismiss){const item=notificationItems[Number(dismiss.dataset.dismiss)];if(item){dismissedNotifications.add(notificationKey(lead.id,item));updateNotifications(notificationItems);notificationTray.querySelector('[data-close-inbox]').focus();}return;}
+      if(open){const item=notificationItems[Number(open.dataset.notificationOpen)];if(!item)return;close();setPanelMode('full');const target=panel.querySelector('#'+item.target),section=target?.closest('details');if(section)section.open=true;target?.scrollIntoView({block:'nearest'});return;}
+      if(recheck&&Date.now()>=notificationRetryAt){notificationRetryAt=Date.now()+30000;refreshHistory();retryFailedChecks();refreshWorkflow();}
+    };
+    window.addEventListener('resize',positionNotifications);
+  }
   function workflowItems(history,mobileEvidence,route,isCanada,property){
     const items=[];
     const add=(kind,title,text,target,evidence)=>items.push({kind,title,text,target,evidence});
@@ -900,6 +973,13 @@
     if(manufacturedType(listingType))evidence.push('Manually compared type: '+listingType);
     for(const r of matchedListings)if(manufacturedType(r.type+' '+r.style))evidence.push(r.source+': '+r.type+(r.style?' / '+r.style:''));
     const items=workflowItems(history,evidence,distances.get(distanceKey()),canadianLead(lead),lead.propertyCheck);
+    const mapCheck=addressChecks.get(clean(panel.querySelector('#spa-address')?.value));
+    if(mapCheck&&mapCheck.status!=='matched')items.push({kind:mapCheck.status==='not-found'?'review':'unknown',title:mapCheck.status==='not-found'?'Address needs review':'Maps address not verified',text:mapCheck.label+'. This does not establish that the address is invalid.',target:'spa-extracted',evidence:mapCheck.label});
+    const dupes=panel.querySelector('#spa-dupes');
+    if(dupes?.querySelector('a'))items.push({kind:'review',title:'Possible duplicate leads',text:'Compare the returned records before proceeding.',target:'spa-dupes',evidence:dupes.textContent});
+    const unit=panel.querySelector('#spa-unit-warning');
+    if(unit&&!unit.hidden)items.push({kind:'review',title:'Check whether a unit applies',text:'Condos and townhouses do not always require a unit number.',target:'spa-extracted',evidence:unit.textContent});
+    updateNotifications(items);
     const key=JSON.stringify([lead.id,history.rows,items]);
     let box=panel.querySelector('#spa-workflow');if(!box){box=document.createElement('section');box.id='spa-workflow';const distanceSection=main.querySelector('#spa-distance')?.closest('section');if(distanceSection)distanceSection.after(box);else main.prepend(box);}
     updateSectionFlags(items);
@@ -942,7 +1022,7 @@
   }
   function safeIssueReport(){
     // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
-    return ['Property Assistant v0.7.27','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+    return ['Property Assistant v0.7.29','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
   }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
@@ -1033,13 +1113,17 @@
       resolve({doc,url:r.finalUrl||url});
     }catch{reject(Error('Returned page could not be read'));}},onerror:()=>reject(Error('Request blocked or unavailable')),ontimeout:()=>reject(Error('Request timed out')),onabort:()=>reject(Error('Request cancelled'))});
   });}
-  function housingCandidate(doc,source){
+  function housingCandidates(doc,source,address=''){
+    const found=[];
     for(const a of doc.querySelectorAll('a[href]')){
       try{let u=new URL(a.getAttribute('href'),'https://www.google.com');if(u.hostname==='www.google.com'&&u.pathname==='/url')u=new URL(u.searchParams.get('q')||u.searchParams.get('url'));
-        if(listingSource(u.href)===source){u.hash='';u.search='';return u.href;}
+        if(['zillow.com','redfin.com','redfin.ca','realtor.com'].includes(u.hostname))u.hostname='www.'+u.hostname;
+        if(u.username||u.password)continue;
+        if(listingSource(u.href)===source){u.hash='';u.search='';if(!found.some(r=>r.url===u.href)){const words=normAddress(address.split(',')[0]).split(' ').filter(Boolean);const haystack=normAddress((a.textContent||'')+' '+decodeURIComponent(u.pathname).replace(/-/g,' '));found.push({url:u.href,score:words.filter(w=>haystack.split(/\s+/).includes(w)).length});}}
       }catch{}
-    }return '';
+    }return found.sort((a,b)=>b.score-a.score).slice(0,3).map(r=>r.url);
   }
+  function housingCandidate(doc,source,address=''){return housingCandidates(doc,source,address)[0]||'';}
   function housingFacts(doc,url,address){
     const source=listingSource(url);if(!source)return null;
     const heading=doc.querySelector('h1')?.textContent||'';
@@ -1051,38 +1135,100 @@
     const structured=[];for(const node of doc.querySelectorAll('script[type="application/ld+json"]')){try{structured.push(JSON.parse(node.textContent));}catch{}}
     return structuredHousing(structured,url,address,Date.now());
   }
-  async function automaticHousing(){
+  // Made by Montana. Maps failures are not proof that an address is wrong.
+  function mapsAddressResult(text,addresses,address){
+    if(/captcha|unusual traffic|access denied|enable javascript|consent\.google/i.test(text))return {status:'unavailable',label:'Google Maps unavailable · verify address manually'};
+    if(/(?:couldn[’']?t|cannot|can[’']?t) find|no results found|no matching results/i.test(text))return {status:'not-found',label:'No Google Maps match · check address spelling and unit'};
+    if(addresses.some(a=>listingIdentity(a)&&listingIdentity(a)===listingIdentity(address)))return {status:'matched',label:'Google Maps address matched'};
+    return {status:'unavailable',label:'Google Maps address not verified · use Verify address'};
+  }
+  const addressChecks=new Map();
+  function showAddressCheck(){
+    const box=panel?.querySelector('#spa-address-status');if(!box||!lead)return;
+    const result=addressChecks.get(clean(panel.querySelector('#spa-address')?.value));
+    box.textContent=result?.label||'Google Maps address not checked';
+    box.dataset.tone=result?.status==='matched'?'green':'';
+  }
+  async function automaticAddressCheck(){
+    if(!lead||!panel)return;
+    const address=clean(panel.querySelector('#spa-address')?.value),id=lead.id;
+    if(!address)return;
+    const old=addressChecks.get(address);
+    if(old&&Date.now()-old.readAt<LISTING_TTL){showAddressCheck();return;}
+    const valid=()=>panel?.isConnected&&lead?.id===id&&clean(panel.querySelector('#spa-address')?.value)===address;
+    addressChecks.set(address,{status:'checking',label:'Checking Google Maps address…',readAt:Date.now()});showAddressCheck();
+    try{
+      if(lead.uncertain||!lead.street)throw Error('Physical address needs review');
+      const page=await housingHtml(searchUrl('maps',address));
+      if(!valid()){addressChecks.delete(address);return;}
+      const url=new URL(page.url);
+      if(url.hostname!=='www.google.com'||!url.pathname.startsWith('/maps'))throw Error('Maps redirected');
+      const body=page.doc.body?.cloneNode(true);body?.querySelectorAll('script,style,noscript').forEach(n=>n.remove());
+      const candidates=[...page.doc.querySelectorAll('[data-item-id="address"],[itemprop="streetAddress"]')].map(n=>clean(n.textContent).replace(/^Address:\s*/i,''));
+      addressChecks.set(address,{...mapsAddressResult(clean(body?.textContent),candidates,address),readAt:Date.now()});
+    }catch{
+      if(!valid()){addressChecks.delete(address);return;}
+      addressChecks.set(address,{status:'unavailable',label:'Google Maps unavailable · verify address manually',readAt:Date.now()});
+    }
+    if(addressChecks.size>50)addressChecks.delete(addressChecks.keys().next().value);
+    if(valid()){showAddressCheck();refreshWorkflow();}
+  }
+  function retryFailedChecks(){
+    if(!lead||!panel)return;
+    const address=clean(panel.querySelector('#spa-address')?.value);
+    const map=addressChecks.get(address);
+    if(map?.status!=='matched'&&map?.status!=='checking'){addressChecks.delete(address);automaticAddressCheck();}
+    const route=distances.get(distanceKey()),request=estimateRequests.get(address);
+    if(canadianLead(lead)&&!Number.isFinite(route?.km)&&(!request||request.failed)){estimateRequests.delete(address);automaticDistance();}
+    const housing=housingChecks.get(address);
+    if(!housing||!Object.values(housing.statuses).some(s=>s==='Checking'||s==='Queued')){housingChecks.delete(address);automaticHousing(false);}
+    if(/unavailable/i.test(panel.querySelector('#spa-dupes')?.textContent||''))duplicateCheck().catch(()=>notice('Duplicate lookup unavailable.'));
+  }
+  async function automaticHousing(allowTabs=true){
     if(!lead||!panel)return;
     const address=clean(panel.querySelector('#spa-address')?.value);
     if(!lead.street||!listingIdentity(address)||lead.uncertain)return;
     // Start the selected opt-in search immediately, even when background results are cached.
     // Do not wait for up to six sequential remote requests before opening the user's chosen site.
-    openPropertyTabs(false);
+    if(allowTabs)openPropertyTabs(false);
+    const currentLeadId=lead.id,valid=()=>panel?.isConnected&&lead?.id===currentLeadId&&clean(panel.querySelector('#spa-address')?.value)===address;
     const existing=housingChecks.get(address),retryDue=existing?.retryAt&&existing.retryAt<=Date.now();
     if(existing&&!retryDue&&Date.now()-existing.started<LISTING_TTL)return;
     const state=retryDue?{...existing,started:Date.now(),attempts:existing.attempts+1,retryAt:0}:{started:Date.now(),attempts:1,retryAt:0,statuses:{Zillow:'Queued',Redfin:'Queued','Realtor.com':'Queued'}};housingChecks.set(address,state);
     if(housingChecks.size>30)housingChecks.delete(housingChecks.keys().next().value);
     for(const [key,source] of [['zillow','Zillow'],['redfin','Redfin'],['realtor','Realtor.com']]){
+      if(sourceResults(savedValue(LISTINGS_KEY,[]),address,Date.now()).some(s=>s.source===source&&s.result)){state.statuses[source]='Matched';continue;}
       if(retryDue&&!transientLookupFailure(state.statuses[source]))continue;
       if(clean(panel.querySelector('#spa-address')?.value)!==address)return;
       state.statuses[source]='Checking';refreshListing();
       try{
         const search=await housingHtml(searchUrl(key,address));
+        if(!valid()){if(housingChecks.get(address)===state)housingChecks.delete(address);return;}
         if(new URL(search.url).hostname!=='www.google.com')throw Error('Search redirected; manual check needed');
-        const candidate=housingCandidate(search.doc,source);if(!candidate)throw Error('No listing found in search');
-        const page=await housingHtml(candidate);if(listingSource(page.url)!==source)throw Error('Listing redirected; manual check needed');
-        const result=housingFacts(page.doc,page.url,address);if(!result){
-          const heading=page.doc.querySelector('h1')?.textContent||'';
-          if(listingAddressMismatch(address,heading))throw Error('Address mismatch: listing house, street, unit or postal code differs. Result rejected.');
-          throw Error('Address or property type could not be verified');
+        let candidates=housingCandidates(search.doc,source,address);
+        if(!candidates.length){
+          const broad=await housingHtml('https://www.google.com/search?q='+encodeURIComponent(address+' '+source));
+          if(!valid()){if(housingChecks.get(address)===state)housingChecks.delete(address);return;}
+          if(new URL(broad.url).hostname!=='www.google.com')throw Error('Search redirected; manual check needed');
+          candidates=housingCandidates(broad.doc,source,address);
         }
+        if(!candidates.length)throw Error('Automated search found no readable listing link; a listing may still exist. Try Search address.');
+        let result=null,mismatch=false;
+        for(const candidate of candidates){
+          const page=await housingHtml(candidate);
+          if(!valid()){if(housingChecks.get(address)===state)housingChecks.delete(address);return;}
+          if(listingSource(page.url)!==source)continue;
+          result=housingFacts(page.doc,page.url,address);if(result)break;
+          mismatch=mismatch||listingAddressMismatch(address,page.doc.querySelector('h1')?.textContent||'');
+        }
+        if(!result)throw Error(mismatch?'Address mismatch: returned listings did not verify this address. Review manually.':'Listing links found, but address/property type could not be read. Review manually.');
         const old=savedValue(LISTINGS_KEY,[]);if(!saveValue(LISTINGS_KEY,[result,...(Array.isArray(old)?old.filter(r=>r&&!(r.identity===result.identity&&r.source===source)&&Date.now()-r.readAt<LISTING_TTL):[])].slice(0,30)))throw Error('Could not save listing result');
         state.statuses[source]='Matched';
       }catch(e){state.statuses[source]=e.message;}
       if(clean(panel.querySelector('#spa-address')?.value)===address)refreshListing();
     }
     if(state.attempts<3&&Object.values(state.statuses).some(transientLookupFailure))state.retryAt=Date.now()+30000*state.attempts;
-    if(clean(panel.querySelector('#spa-address')?.value)===address)openPropertyTabs(false);
+    if(allowTabs&&valid())openPropertyTabs(false);
   }
   function resumeAutomaticChecks(){
     if(!panel||!lead||document.hidden)return;
@@ -1117,7 +1263,7 @@
     const unitButton=panel.querySelector('#spa-unit-reviewed');if(unitButton){unitButton.hidden=!(warning.show||acknowledged);unitButton.textContent=acknowledged?'No unit applies · Undo':'Checked: no unit applies';}
   }
   // Made by Montana. Preserve creator credit when reviewing this interface.
-  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.27</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
+  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.29</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
     const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
     panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
@@ -1177,13 +1323,14 @@
       button.append(colors,document.createTextNode(t.label));button.onclick=()=>{applyTheme(key);saveValue(THEME_KEY,key);};swatches.append(button);
     }
     themeLabel.after(favorite,gallery);
-    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.27 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
+    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.29 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
     const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
     const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
     const soundBar=document.createElement('div');soundBar.id='spa-sound-bar';
     soundBar.innerHTML='<span id="spa-sound-label">Muted</span><button id="spa-sound-switch" type="button" role="switch" aria-label="Alert sound" aria-checked="false"><span aria-hidden="true">🔇</span><i aria-hidden="true"></i><span aria-hidden="true">🔊</span></button>';
     panel.append(soundBar);soundBar.querySelector('button').onclick=()=>panel.querySelector('#spa-history-sound').click();updateHistorySound();
     const header=panel.querySelector('header');
+    setupNotifications(header);
     const settingsShortcut=document.createElement('button');settingsShortcut.textContent='⚙';settingsShortcut.title='Settings';settingsShortcut.setAttribute('aria-label','Open settings');
     settingsShortcut.onclick=()=>{setPanelMode('full');settings.open=!settings.open;if(settings.open)settingsTitle.focus();};header.append(settingsShortcut);
     header.onpointerdown=e=>{if(e.button!==0||e.target.closest('button,a'))return;const r=panel.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;header.setPointerCapture(e.pointerId);header.onpointermove=m=>{panel.style.left=m.clientX-x+'px';panel.style.top=m.clientY-y+'px';panel.style.right='auto';clamp();};header.onpointerup=header.onpointercancel=()=>{header.onpointermove=null;save();};};
@@ -1250,6 +1397,9 @@
     if(get('spa-route')){const section=get('spa-route').closest('section');main.prepend(section);get('spa-km').value=distances.get(distanceKey())?.km??'';get('spa-route').onclick=()=>window.open(routeUrl(get('spa-address').value),'_blank','noopener');get('spa-km').oninput=e=>{const value=e.target.value,level=value===''?'unknown':distanceStatus(Number(value)),box=get('spa-distance');if(level==='unknown')distances.delete(distanceKey());else distances.set(distanceKey(),{km:Number(value)});if(distances.size>50)distances.delete(distances.keys().next().value);updateHeader();box.dataset.tone=level==='over'?'red':level==='within'?'green':'';box.textContent=level==='unknown'?'Not checked.':level==='over'?'Over 150 km: beyond hard cutoff. Review before proceeding.':level==='near'?'Above 147 km: close to cutoff. Recheck route settings.':'Within 150 km based on your entered distance; other eligibility checks still apply.';};get('spa-km').dispatchEvent(new Event('input'));}
     get('spa-address').addEventListener('input',()=>{distances.delete(distanceKey());if(get('spa-km')){get('spa-km').value='';get('spa-km').dispatchEvent(new Event('input'));}updateHeader();});
     get('spa-address').addEventListener('input',refreshListing);
+    const addressRow=document.createElement('div');addressRow.innerHTML='<small id="spa-address-status" role="status">Google Maps address not checked</small><button type="button" id="spa-address-verify">Verify address in Maps</button>';
+    get('spa-extracted').after(addressRow);
+    addressRow.querySelector('button').onclick=()=>{const address=clean(get('spa-address').value);if(address)window.open(searchUrl('maps',address),'_blank','noopener,noreferrer');};
     if(get('spa-route'))get('spa-route').onclick=()=>{const address=clean(get('spa-address').value),id=listingIdentity(address);if(!id){notice('A full street address and postal code are needed.');return;}const old=savedValue(REQUESTS_KEY,[]),now=Date.now();const stored=saveValue(REQUESTS_KEY,[{identity:id,readAt:now},...(Array.isArray(old)?old.filter(r=>r&&r.identity!==id&&now-r.readAt<LISTING_TTL):[])].slice(0,10));window.open(routeUrl(address),'_blank','noopener');notice(stored?'In Maps open Options so Avoid tolls can be verified. The selected driving distance will return here.':'Result storage unavailable. Read the route and enter kilometres manually.');};
     if(canadianLead(lead)){
       let warning=panel.querySelector('#spa-territory-warning');if(!warning){warning=document.createElement('small');warning.id='spa-territory-warning';panel.querySelector('.spa-heading').append(warning);}
@@ -1258,12 +1408,13 @@
     }else {
       panel.querySelector('#spa-territory-warning')?.remove();
     }
-    const retry=document.createElement('button');retry.textContent='Retry checks';retry.id='spa-retry-checks';retry.title='Retry property, distance and duplicate checks without changing your layout or settings';
-    get('spa-extracted').after(retry);retry.onclick=()=>{retry.disabled=true;const address=clean(get('spa-address').value);housingChecks.delete(address);estimateRequests.delete(address);if(distances.get(distanceKey())?.estimated)distances.delete(distanceKey());automaticHousing();automaticDistance();duplicateCheck().catch(()=>notice('Duplicate lookup unavailable.'));setTimeout(()=>{if(retry.isConnected)retry.disabled=false;},30000);};
+    const retry=document.createElement('button');retry.textContent='Retry failed checks';retry.id='spa-retry-checks';retry.title='Retry unsuccessful checks only; keep successful results, layout and settings';
+    get('spa-extracted').after(retry);retry.onclick=()=>{retry.disabled=true;retryFailedChecks();setTimeout(()=>{if(retry.isConnected)retry.disabled=false;},30000);};
     setupSections(main);
-    refreshHistory();refreshListing();refreshRoute();updateHeader();automaticDistance();automaticHousing();
+    refreshHistory();refreshListing();refreshRoute();updateHeader();automaticDistance();automaticHousing();automaticAddressCheck();
     get('spa-address').addEventListener('change',()=>automaticDistance());
     get('spa-address').addEventListener('change',()=>automaticHousing());
+    get('spa-address').addEventListener('change',()=>automaticAddressCheck());
   }
   async function duplicateCheck(){controller?.abort();const token=++generation,current=lead;const box=panel.querySelector('#spa-dupes');
     if(!current.id||!current.lastName||!current.street||!current.zip){box.textContent='Unavailable: name, address, postal code or lead ID missing.';return;}
@@ -1283,8 +1434,8 @@
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.7.27 · '+[...startupIssues].join('; '):'v0.7.27 TEST · Read-only');
-    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.27 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.29 · '+[...startupIssues].join('; '):'v0.7.29 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.29 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -1306,7 +1457,7 @@
       if(!propertyJobAllowed(job)){done=true;updatePropertyJob(token,'Automatic tabs switched off');return;}
       const text=clean(document.body?.innerText).slice(0,6000);
       if(/captcha|unusual traffic|verify you are human|access denied|enable javascript/i.test(text)){done=true;updatePropertyJob(token,'Search needs your attention');return;}
-      const target=housingCandidate(document,job.source);if(!target)return;
+      const target=housingCandidate(document,job.source,job.address);if(!target)return;
       done=true;updatePropertyJob(token,'Reading listing');location.assign(target+'#sixx-property-job='+encodeURIComponent(token));
     };
     inspect();const observer=new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(inspect,700);});observer.observe(document.documentElement,{childList:true,subtree:true});
@@ -1364,7 +1515,7 @@
   scan();
   watchValue(LISTINGS_KEY,refreshListing);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.7.27 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.29 · '+[...startupIssues].join('; '));
   watchValue(HISTORY_SOUND_KEY,updateHistorySound);
   document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
   window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);
