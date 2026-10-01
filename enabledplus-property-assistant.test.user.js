@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.7.29
+// @version      0.7.30
 // @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
@@ -394,7 +394,7 @@
   // Made by Montana. History extraction adapted from our Not Home Guard.
   function historyResults(rows){
     const unique=rows.filter((r,i,all)=>all.findIndex(o=>o.dateText===r.dateText&&o.history===r.history&&o.doneBy===r.doneBy)===i);
-    return {loadedCount:unique.length,rows:unique.filter(r=>/^(?:not\s+home|no\s+demo|demo\s+no\s+sale|dns|sale|cancelled\s+sale|canceled\s+sale)$/i.test(clean(r.history))),notHomes:unique.filter(r=>/^not\s+home$/i.test(clean(r.history))),noDemos:unique.filter(r=>/^no\s+demo$/i.test(clean(r.history))),demoNoSales:unique.filter(r=>/^(?:demo\s+no\s+sale|dns)$/i.test(clean(r.history))),sales:unique.filter(r=>/^sale$/i.test(clean(r.history))),cancelledSales:unique.filter(r=>/^cancel(?:led|ed)\s+sale$/i.test(clean(r.history)))};
+    return {loadedCount:unique.length,rows:unique.filter(r=>/^(?:not\s+home|no\s+demo|demo\s+no\s+sale|dns)$/i.test(clean(r.history))),notHomes:unique.filter(r=>/^not\s+home$/i.test(clean(r.history))),noDemos:unique.filter(r=>/^no\s+demo$/i.test(clean(r.history))),demoNoSales:unique.filter(r=>/^(?:demo\s+no\s+sale|dns)$/i.test(clean(r.history)))};
   }
   function historyGuidance(results){
     const notes=[];
@@ -405,8 +405,6 @@
     if(results.demoNoSales.length>=2)notes.push('2+ Demo No Sales: do not message-confirm. Speak with the homeowner and establish whether this is the same project and when it was quoted.');
     else if(results.demoNoSales.length)notes.push('Demo No Sale: verify the project and prior quote date before confirming.');
     if(results.demoNoSales.length>=2&&results.notHomes.length)notes.push('Price-increase review (saved Not Home tool guidance): multiple Demo No Sales plus a Not Home. Check whether this is the same project and verify the actual quote date. Same-project quote over one year old: have the price-increase conversation before confirming. Within one year: follow the sales-rep or sales-manager escalation process. Unknown date, exactly one year, different project, or conflicting instructions: ask a leader. History-entry dates and result counts do not establish quote age.');
-    if(results.cancelledSales?.length)notes.push('Cancelled Sale: review the cancellation reason and project status in Appointment History. Check current company guidance or a leader before proceeding; this result is not an appointment cancellation.');
-    if(results.sales?.length)notes.push('Sale: review the sold project and current status before discussing a new appointment. A prior sale alone is not a do-not-confirm rule.');
     return notes;
   }
   function openOriginalHistory(){
@@ -431,7 +429,7 @@
     let bubble=panel.querySelector('#spa-history-bubble');if(!bubble){bubble=document.createElement('button');bubble.id='spa-history-bubble';bubble.type='button';panel.querySelector('.spa-heading').append(bubble);}
     bubble.hidden=!total;bubble.textContent='History review · '+total;bubble.setAttribute('aria-label',total+' appointment result flags. Open history review');
     bubble.onclick=()=>{if(panel.dataset.mini==='true')panel.querySelector('[data-action=mini]').click();const section=panel.querySelector('#spa-history')?.closest('details');if(section)section.open=true;panel.querySelector('#spa-history')?.scrollIntoView({block:'nearest'});};
-    const summary=result.loadedCount?`${result.notHomes.length} Not Home · ${result.noDemos.length} No Demo · ${result.demoNoSales.length} Demo No Sale · ${result.cancelledSales.length} Cancelled Sale · ${result.sales.length} Sale`:'History unavailable or no readable rows. Review the original history; this is not clearance.';
+    const summary=result.loadedCount?`${result.notHomes.length} Not Home · ${result.noDemos.length} No Demo · ${result.demoNoSales.length} Demo No Sale`:'History unavailable or no readable rows. Review the original history; this is not clearance.';
     box.innerHTML='<p><strong>'+esc(summary)+'</strong></p><div class="spa-history-scroll" role="region" aria-label="History issues and guidance" tabindex="0">'+
       historyGuidance(result).map(text=>'<p class="status">'+esc(text)+'</p>').join('')+
       (result.rows.length?'<small>Read directly from this lead. Dates are history-entry dates; full result notes remain in the original lead history.</small>'+result.rows.map(r=>'<p class="status"><strong>'+esc(r.history)+'</strong><br>'+esc(r.dateText)+'<br><small>'+esc(r.doneBy)+'</small></p>').join(''):result.loadedCount?'<p>No matching outcomes in the readable history. This is not confirmation clearance.</p>':'<p>Waiting for readable history on the lead.</p>')+
@@ -950,8 +948,6 @@
     if(history.noDemos.length)add('warning','No Demo: resolve prior issues','Read every No Demo result note and address the red flags with the homeowner before confirming.','spa-history',history.noDemos.map(r=>r.history+' · '+r.dateText).join('\n'));
     if(history.notHomes.length===1)add('review','1 Not Home: check timing and source','Same/next day may qualify for message confirmation; 2+ days needs Reply C or live confirmation. Source/proxy restrictions still apply.','spa-history',history.notHomes.map(r=>r.history+' · '+r.dateText).join('\n'));
     if(history.demoNoSales.length===1)add('review','Demo No Sale: check prior quote','Verify the project and actual quote date before confirming.','spa-history',history.demoNoSales.map(r=>r.history+' · '+r.dateText).join('\n'));
-    if(history.cancelledSales.length)add('review','Cancelled Sale: review reason','Review cancellation reason, current project status and leader guidance. This is not an appointment cancellation.','spa-history',history.cancelledSales.map(r=>r.history+' · '+r.dateText).join('\n'));
-    if(history.sales.length)add('review','Prior Sale: review project','Check the sold project and current status before discussing another appointment. A prior sale alone is not a disqualification.','spa-history',history.sales.map(r=>r.history+' · '+r.dateText).join('\n'));
     if(isCanada){
       if(!Number.isFinite(route?.km))add('unknown','Distance not verified','Wait for the lookup or use Verify in Maps. Missing results do not mean the lead is within territory.','spa-distance',route?.error?'Distance service returned no usable result.':'Distance lookup has no result yet.');
       else if(['postal','city','street'].includes(route.precision))add('unknown','Approximate distance: verify the house','This is an area estimate, not the house route. Verify before deciding the 150 km Central GTA cutoff.','spa-distance',route.km.toFixed(1)+' km · '+route.precision+' estimate');
@@ -1022,7 +1018,7 @@
   }
   function safeIssueReport(){
     // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
-    return ['Property Assistant v0.7.29','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+    return ['Property Assistant v0.7.30','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
   }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
@@ -1263,7 +1259,7 @@
     const unitButton=panel.querySelector('#spa-unit-reviewed');if(unitButton){unitButton.hidden=!(warning.show||acknowledged);unitButton.textContent=acknowledged?'No unit applies · Undo':'Checked: no unit applies';}
   }
   // Made by Montana. Preserve creator credit when reviewing this interface.
-  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.29</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
+  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.30</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
     const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
     panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
@@ -1323,7 +1319,7 @@
       button.append(colors,document.createTextNode(t.label));button.onclick=()=>{applyTheme(key);saveValue(THEME_KEY,key);};swatches.append(button);
     }
     themeLabel.after(favorite,gallery);
-    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.29 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
+    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.30 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
     const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
     const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
     const soundBar=document.createElement('div');soundBar.id='spa-sound-bar';
@@ -1434,8 +1430,8 @@
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.7.29 · '+[...startupIssues].join('; '):'v0.7.29 TEST · Read-only');
-    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.29 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.30 · '+[...startupIssues].join('; '):'v0.7.30 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.30 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -1515,7 +1511,7 @@
   scan();
   watchValue(LISTINGS_KEY,refreshListing);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.7.29 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.30 · '+[...startupIssues].join('; '));
   watchValue(HISTORY_SOUND_KEY,updateHistorySound);
   document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
   window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);

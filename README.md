@@ -1,6 +1,6 @@
 # test: Property Assistant
 
-Made by Montana. Version 0.7.29, review build.
+Made by Montana. Version 0.7.30, review build.
 
 [Download / install the Tampermonkey script](https://raw.githubusercontent.com/TheOfficialsixx/test/main/enabledplus-property-assistant.test.user.js)
 
@@ -18,7 +18,7 @@ Open the link with Tampermonkey installed, or save the file and import it into T
 - Zillow, Redfin and Realtor.com property-type checks, conflict warnings, and address-mismatch rejection where the listing address is readable.
 - Optional automatic opening of one selected property source.
 - Formatted copy buttons for homeowner, address and assigned consultant.
-- Independent appointment-history warnings, supporting evidence and next-action guidance. The companion history tool is optional.
+- Independent appointment-history warnings for Not Homes, No Demos and Demo No Sales only. Sales and Cancelled Sales are excluded from history alerts, counts and sound. Supporting evidence and next-action guidance remain available; the companion history tool is optional.
 - Fifty illustrated themes, draggable/resizable window, remembered settings, compact and circular minimized modes.
 - Small pulsing notification dots instead of flashing section bars; reduced-motion support.
 - Optional active-tab audio with a persistent bottom sound switch in full and compact views. The saved mute preference applies across leads.
