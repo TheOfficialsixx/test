@@ -1,6 +1,6 @@
 # test: Property Assistant
 
-Made by Montana. Version 0.7.31, review build.
+Made by Montana. Version 0.7.33, review build.
 
 [Download / install the Tampermonkey script](https://raw.githubusercontent.com/TheOfficialsixx/test/main/enabledplus-property-assistant.test.user.js)
 
@@ -8,17 +8,17 @@ Open the link with Tampermonkey installed, or save the file and import it into T
 
 ## Features
 
-- Reorder sections with drag handles or Move up/down buttons. The layout is saved across leads and refreshes, with a Reset section order control. Existing collapse controls are preserved.
+- Smaller drag-only handles, saved section ordering, and individually resizable section heights. Reset order and sizes from Settings. Existing collapse controls are preserved.
+- Simplified layout: Copy details, Next action, manual distance entry and manual listing comparison have been removed. Property/address verification uses one source dropdown and Verify button.
 - Top-left notification inbox with individual review/dismiss controls, history evidence, rechecks and a saved mute control. Dismissal is session-only and does not resolve underlying warnings.
 - Google Maps address checks distinguish no readable match from an unavailable lookup. Property searches support additional link formats and up to three candidates while retaining address-match safeguards.
 - Faster optional alert cadence, failed-check retries that preserve successful results, and additional stale-lead and window-boundary safeguards.
 - Smaller compact rectangle: 210 × 170 default, resizable down to 170 × 120, with tighter controls and preserved theme artwork. Full and compact views retain independent saved sizes, wrapping source results and subtle links to matching listings.
 
-- Canadian lead distance estimates from Mississauga, with Maps verification. The 150 km cutoff is Central GTA only, not Eastern GTA.
+- Automatic Canadian distance estimates from Mississauga, clear driving/approximate labels, optional Maps verification and a Retry button shown only after failure. The 150 km cutoff is Central GTA only, not Eastern GTA.
 - Read-only duplicate candidate lookup.
 - Zillow, Redfin and Realtor.com property-type checks, conflict warnings, and address-mismatch rejection where the listing address is readable.
 - Optional automatic opening of one selected property source.
-- Formatted copy buttons for homeowner, address and assigned consultant.
 - Independent appointment-history warnings for Not Homes, No Demos and Demo No Sales only. Sales and Cancelled Sales are excluded from history alerts, counts and sound. Supporting evidence and next-action guidance remain available; the companion history tool is optional.
 - Fifty illustrated themes, draggable/resizable window, remembered settings, compact and circular minimized modes.
 - Small pulsing notification dots instead of flashing section bars; reduced-motion support.
@@ -33,7 +33,7 @@ External sites may block requests or have no matching listing. Unavailable is no
 
 Address checks send the lead address to external search, housing, geocoding and routing services. Use only with company authorization. No customer records or credentials are included in this repository.
 
-Twenty-two local test suites passed before upload. Synthetic browser testing covered section dragging, move buttons, collapse controls and order persistence after refresh, alongside prior rendering, notifications and saved sound checks. The synthetic testing page is not part of the installed script. Live-lead validation of this build remains pending; this is not a guarantee of live external-site availability.
+Twenty-five local test suites passed before upload. Synthetic browser testing covered dragging, saved section heights after refresh, collapse controls, automatic distance results and one-click recovery from a simulated distance failure. A live service check using Toronto City Hall's public address returned a driving distance. The synthetic testing page is not part of the installed script. Live-lead validation of this build remains pending; this is not a guarantee of live external-site availability.
 
 To update on another PC, open the install link and accept the update in Tampermonkey, then refresh the lead tabs. Refreshing the lead alone does not install this update. Disable duplicate older Property Assistant copies.
 

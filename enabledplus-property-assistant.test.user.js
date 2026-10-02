@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.7.31
-// @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
+// @version      0.7.33
+// @description  Read-only history warnings, duplicate candidates, automatic property checks and Canadian distance estimates.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
 // @match        https://www.enabledplus.com/WebForms/AppointmentCalendar.aspx*
@@ -182,9 +182,9 @@
     if(!source){tell('Select Zillow, Redfin or Realtor.com for automatic checking.');return;}
     const results=sourceResults(savedValue(LISTINGS_KEY,[]),address,Date.now());
     if(!manual&&results.some(s=>s.source===source&&s.result)){tell(source+' already verified.');return;}
-    const recentPropertyRequests=propertyJobs();if(!manual&&recentPropertyRequests.some(j=>j.identity===identity&&j.source===source&&j.status!=='Tab could not open')){tell(source+' already opened recently. Use Open selected check to reopen.');return;}
+    const recentPropertyRequests=propertyJobs();if(!manual&&recentPropertyRequests.some(j=>j.identity===identity&&j.source===source&&j.status!=='Tab could not open')){tell(source+' already opened. Use Verify if needed.');return;}
     // Limit unattended tab creation across leads, not just on this page.
-    if(!manual&&recentPropertyRequests.filter(j=>!j.manual).length>=3){tell('Automatic tab limit reached. Use Open selected check if needed.');return;}
+    if(!manual&&recentPropertyRequests.filter(j=>!j.manual).length>=3){tell('Automatic tab limit reached. Use Verify if needed.');return;}
     const token=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
     const job={token,identity,address,source,started:Date.now(),manual,status:'Opening search'};
     if(!saveValue(PROPERTY_JOBS_KEY,[...recentPropertyRequests,job].slice(-30))){tell('Could not save tab request. No tab opened.');return;}
@@ -583,7 +583,7 @@
     #${ID} .spa-section>summary:after{content:'+';font-size:17px;color:#f798d5}
     #${ID} .spa-section[open]>summary:after{content:'−'}
     #${ID} .spa-section[open]>summary{border-bottom:1px solid #493250}
-    #${ID} .spa-section-body{padding:10px}
+    #${ID} .spa-section-body{padding:10px;resize:vertical;overflow:auto;min-height:72px;max-height:65vh;box-sizing:border-box}
     #${ID} .spa-tab-toggle{display:flex;gap:7px;align-items:center}#${ID} .spa-tab-toggle input{width:auto;flex:none}#${ID} #spa-tabs-status{display:block;margin-top:5px}
     #${ID} input:focus-visible,#${ID} textarea:focus-visible,#${ID} select:focus-visible,#${ID} button:focus-visible,#${ID} a:focus-visible,#${ID} summary:focus-visible{outline:2px solid #75edee;outline-offset:2px}
     @media(prefers-reduced-motion:reduce){#${ID} button,#${ID} a{transition:none}}
@@ -787,7 +787,7 @@
     #${ID}-notifications p{margin:6px 0}
     #${ID}-notifications .spa-inbox-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
     #${ID} .spa-move-controls{display:inline-flex;flex:0 0 auto;gap:2px;margin-right:4px;vertical-align:middle}
-    #${ID} .spa-move-controls button{min-height:24px;width:22px;padding:0;font-size:12px;line-height:22px}
+    #${ID} .spa-move-controls button{min-height:22px;width:22px;padding:3px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;color:var(--spa-accent)}
     #${ID} [data-section-drag]{cursor:grab}
     #${ID} section[data-dragging=true]{opacity:.65}
     #${ID} section[data-drop=before]{border-top:3px solid var(--spa-accent)}
@@ -829,7 +829,7 @@
   function quickBubbleState(current,history,distance,mobile){
     const count=history.rows.length,canada=current&&canadianLead(current),km=distance?.km;
     const label=mobile?'MH':canada&&Number.isFinite(km)?String(Math.round(km)):count?'H'+count:canada&&!distance?.error?'…':'?';
-    return {label,count,tone:mobile||count?'alert':'review',unit:!mobile&&canada&&Number.isFinite(km)?'km est.':mobile?'review':count?'history':'review',target:mobile?'spa-extracted':count?'spa-history':canada?'spa-km':'spa-extracted'};
+    return {label,count,tone:mobile||count?'alert':'review',unit:!mobile&&canada&&Number.isFinite(km)?'km est.':mobile?'review':count?'history':'review',target:mobile?'spa-extracted':count?'spa-history':canada?'spa-distance':'spa-extracted'};
   }
   function propertyBubbleState(base,records,warning,unitReview,now=Date.now()){
     if(base.label==='MH')return {...base,label:'✕',unit:'Mobile home',target:'spa-extracted',tone:'alert',mobile:true};
@@ -876,7 +876,7 @@
       const prefs=displayPreferences(savedValue('sixx-property-display-v1',{}));
       const sources=lead&&prefs.property?compactPropertySources(matchedListings,lead.propertyCheck):'';
       const info=compactSummary(lead,lead?distances.get(distanceKey()):null,'',mobile,history.rows.length,lead?flags:0,{...prefs,property:false});
-      const firstIssue=panel.querySelector('#spa-workflow strong')?.textContent?.replace(/^Next action · /,'');
+      const firstIssue=notificationItems[0]?.title;
       if(!mobile&&flags&&firstIssue)info.alert=firstIssue+(flags>1?' · +'+(flags-1)+' sections':'');
       compact.innerHTML='<strong>'+esc(info.title)+'</strong><small>'+esc(info.detail)+'</small>'+(sources?'<small class="spa-compact-sources">'+compactSourceLinks(matchedListings,lead.propertyCheck)+'</small>':'')+(info.alert?'<small class="spa-compact-alert">'+esc(info.alert)+'</small>':'');
       compact.title=[info.title,info.detail,sources,info.alert,'Restore for full details. Not confirmation clearance.'].filter(Boolean).join(' · ');
@@ -892,7 +892,6 @@
     return age===0?'Checked just now':age<15?'Checked '+age+' min ago':'Older result · Verify again';
   }
   // Made by Montana. Review is session-only, never eligibility clearance or a company-record edit.
-  let reviewedWorkflowKey='';
   // Session-only inbox review never changes company records or erases underlying warnings.
   const dismissedNotifications=new Set();
   let notificationItems=[],notificationLead='',notificationTray=null,notificationRetryAt=0;
@@ -983,21 +982,7 @@
     const unit=panel.querySelector('#spa-unit-warning');
     if(unit&&!unit.hidden)items.push({kind:'review',title:'Check whether a unit applies',text:'Condos and townhouses do not always require a unit number.',target:'spa-extracted',evidence:unit.textContent});
     updateNotifications(items);
-    const key=JSON.stringify([lead.id,history.rows,items]);
-    let box=panel.querySelector('#spa-workflow');if(!box){box=document.createElement('section');box.id='spa-workflow';const distanceSection=main.querySelector('#spa-distance')?.closest('section');if(distanceSection)distanceSection.after(box);else main.prepend(box);}
     updateSectionFlags(items);
-    const reviewed=key===reviewedWorkflowKey,fingerprint=key+reviewed;
-    if(box.dataset.fingerprint===fingerprint)return;
-    const wasOpen=box.querySelector('details')?.open;box.dataset.fingerprint=fingerprint;
-    const top=items[0],warnings=items.filter(i=>i.kind==='warning').length,unknowns=items.filter(i=>i.kind==='unknown').length;
-    box.innerHTML='<div class="spa-section-body"><strong>Next action'+(top?' · '+esc(top.title):'')+'</strong><p>'+esc(top?.text||'No listed review flags. Continue the script and required checks; this is not automatic clearance.')+'</p><small>'+warnings+' warning(s) · '+items.filter(i=>i.kind==='review').length+' review(s) · '+unknowns+' unverified check(s)'+(reviewed?' · Reviewed this session':'')+'</small><details'+(wasOpen?' open':'')+'><summary>Review details ('+items.length+')</summary><div class="spa-history-scroll" tabindex="0" role="region" aria-label="Prioritized issues and evidence">'+items.map((item,i)=>'<div class="status" data-tone="'+(item.kind==='warning'?'red':'')+'"><strong>'+esc(item.kind==='unknown'?'NOT VERIFIED':item.kind==='warning'?'WARNING':'REVIEW')+': '+esc(item.title)+'</strong><p>'+esc(item.text)+'</p><details><summary>Why this is flagged</summary><p style="white-space:pre-line">'+esc(item.evidence)+'</p></details><button type="button" data-workflow-open="'+i+'">Open relevant details</button></div>').join('')+'</div></details><div class="row"><button type="button" data-workflow-copy>Copy history summary</button>'+(items.length?'<button type="button" data-workflow-review>'+ (reviewed?'Undo reviewed':'Mark these reviewed')+'</button>':'')+'</div><small>Reviewed does not clear a warning, mute sound, or approve confirmation. Refresh reminds you again.</small></div>';
-    sectionMoveControls(box,box.querySelector('.spa-section-body'),'workflow','Next action');
-    applySectionOrder();
-    box.onclick=e=>{
-      const open=e.target.closest?.('[data-workflow-open]');if(open){const item=items[Number(open.dataset.workflowOpen)];if(!item)return;const target=panel.querySelector('#'+item.target);const section=target?.closest('details');if(section)section.open=true;target?.scrollIntoView({block:'nearest'});}
-      if(e.target.closest?.('[data-workflow-copy]'))copy(historyReviewCopy(readAppointmentHistory()));
-      if(e.target.closest?.('[data-workflow-review]')){reviewedWorkflowKey=reviewed?'':key;refreshWorkflow();}
-    };
   }
   function updateSectionFlags(items){
     const targets={distance:'spa-distance',history:'spa-history',property:'spa-extracted'};
@@ -1005,7 +990,6 @@
       const key=section.dataset.section,related=items.filter(i=>i.target===targets[key]);
       let count=related.length,tone=related.some(i=>i.kind==='warning')?'red':'amber';
       if(key==='duplicates'){const box=panel.querySelector('#spa-dupes');count=box?.querySelectorAll('a[href*="Lead?L="]').length||0;if(!count&&/unavailable/i.test(box?.textContent||''))count=1;}
-      if(key==='copy')count=['spa-name','spa-address'].filter(id=>!clean(panel.querySelector('#'+id)?.value)).length;
       const summary=section.querySelector(':scope > summary');if(!summary)continue;
       section.dataset.attention=count?tone:'';
       let tag=summary.querySelector('.spa-section-flag');
@@ -1027,7 +1011,7 @@
   }
   function safeIssueReport(){
     // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
-    return ['Property Assistant v0.7.31','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+    return ['Property Assistant v0.7.33','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
   }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
@@ -1035,13 +1019,14 @@
   function resetLayout(){panel.dataset.bubble='false';panel.dataset.mini='false';panel.dataset.w='320';panel.dataset.h='480';panel.dataset.cw='210';panel.dataset.ch='170';panel.style.width='320px';panel.style.height='480px';panel.style.left=Math.max(6,innerWidth-336)+'px';panel.style.top=Math.min(88,Math.max(6,innerHeight-492))+'px';miniLabel();clamp();save();notice('Layout reset. Your results are unchanged.');}
   function refreshRoute(){
     if(!panel||!lead||!canadianLead(lead))return;
-    const field=panel.querySelector('#spa-km');if(!field)return;
+    const box=panel.querySelector('#spa-distance');if(!box)return;
     const address=panel.querySelector('#spa-address').value,saved=savedValue(ROUTES_KEY,[]);
     const r=Array.isArray(saved)?saved.filter(r=>routeRecordValid(r,address,Date.now())).sort((a,b)=>b.readAt-a.readAt)[0]:null;
-    if(!r){if(distances.get(distanceKey())?.automatic){distances.delete(distanceKey());field.value='';field.dispatchEvent(new Event('input'));}return;}
-    field.value=String(r.km);field.dispatchEvent(new Event('input'));
+    if(!r){if(distances.get(distanceKey())?.automatic)distances.delete(distanceKey());return;}
     distances.set(distanceKey(),{km:r.km,automatic:true,readAt:r.readAt});
-    const box=panel.querySelector('#spa-distance');box.textContent+=' Read from selected Google Maps driving route, avoid tolls checked. '+r.route;
+    box.textContent=r.km.toFixed(1)+' km · Google Maps driving route';
+    box.dataset.tone=gtaMarket(lead.region)&&r.km>150?'red':'';
+    updateHeader();
   }
   const estimateRequests=new Map();
   let lastGeocodeAt=0;
@@ -1061,7 +1046,7 @@
     const valid=()=>panel?.isConnected&&lead.id===leadId&&distanceKey()===key&&clean(panel.querySelector('#spa-address')?.value)===address;
     const cachedEstimate=estimateRequests.get(address);
     if(cachedEstimate?.failed&&(cachedEstimate.retryAt>Date.now()||!cachedEstimate.retryAt)){
-      distances.set(key,{estimated:true,error:true});box.textContent='Distance unavailable.'+(cachedEstimate.retryAt?' Retrying automatically.':' See details or verify in Maps.');
+      distances.set(key,{estimated:true,error:true});box.textContent='Distance unavailable.'+(cachedEstimate.retryAt?' Retrying automatically.':' Verify in Maps if needed.');
       const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=cachedEstimate.error||'Previous lookup failed. Use Retry checks.';updateHeader();return;
     }
     const attempts=(cachedEstimate?.attempts||0)+(cachedEstimate?.failed?1:0);
@@ -1094,17 +1079,18 @@
       })();
       estimateRequests.set(address,{promise:job,started:Date.now(),attempts:attempts||1});if(estimateRequests.size>50)estimateRequests.delete(estimateRequests.keys().next().value);
     }
+    const retry=panel.querySelector('#spa-distance-retry');if(retry){retry.hidden=true;retry.style.display='none';}
     box.textContent='Calculating driving distance automatically…';
     try{
       const entry=estimateRequests.get(address),result=await entry.promise,km=result.km;if(!valid()||(distances.get(key)&&!distances.get(key).estimated))return;
-      distances.set(key,{km,precision:result.precision,estimated:true,readAt:Date.now()});panel.querySelector('#spa-km').value=String(Math.round(km*10)/10);
+      distances.set(key,{km,precision:result.precision,estimated:true,readAt:Date.now()});
       const approximate=result.precision!=='address';
       box.dataset.tone=!approximate&&gtaMarket(lead.region)&&km>150?'red':'';
       const area=result.precision==='postal'?'Postal-area':result.precision==='city'?'City-area':'Street';
-      box.textContent=km.toFixed(1)+(approximate?' km · '+area+' estimate, NOT house distance.':' km · Estimated drive from Mississauga.');
+      box.textContent=km.toFixed(1)+(approximate?' km · Approximate · '+area+' estimate, NOT house distance.':' km · Driving estimate from Mississauga.');
       const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=approximate?area+' location only; actual house distance may differ substantially. Do not use this estimate to decide the 150 km cutoff. OpenStreetMap / OSRM; tolls may be included.':'OpenStreetMap / OSRM route. Toll avoidance is not verified.';updateHeader();
     }catch(e){const request=estimateRequests.get(address);if(request){request.failed=true;request.error=e.message;request.retryAt=transientLookupFailure(e.message)&&request.attempts<3?Date.now()+30000*request.attempts:0;}
-      if(valid()){distances.set(key,{estimated:true,error:true});box.textContent='Distance unavailable.'+(request?.retryAt?' Retrying automatically.':' See details or verify in Maps.');const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=e.message;updateHeader();}}
+      if(valid()){distances.set(key,{estimated:true,error:true});box.textContent='Distance unavailable.'+(request?.retryAt?' Retrying automatically.':' Verify in Maps if needed.');const detail=panel.querySelector('#spa-distance-details');if(detail)detail.textContent=e.message;updateHeader();}}
   }
   const housingChecks=new Map();
   function housingHtml(url){return new Promise((resolve,reject)=>{
@@ -1258,7 +1244,7 @@
     const types=[...new Set(matchedListings.map(r=>propertyLabel(r.type)))],developments=[...new Set(matchedListings.map(r=>r.development).filter(Boolean))];
     box.innerHTML=`<strong>${esc(summary.label)}</strong><small>${esc(matchedListings.map(r=>r.source+': '+r.type).join(' · '))}</small>${conflict?'<p>Website labels differ. Review before relying on this result.</p>':`<small>${esc(typeComparison(lead.type,types[0]).text)}</small>`}${developments.length?`<p>${esc(developments.join(' · '))}</p>`:''}<details><summary>Source details</summary>${matchedListings.map(r=>`<p><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.source)}</a> · ${esc(new Date(r.readAt).toLocaleTimeString())}</p>`).join('')}<small>Street/unit and postal code matched. Check the city too. Unavailable sources do not prove a property is not a condo. Results expire after 15 minutes.</small></details>`;updateHeader();
   }
-  function updateHeader(){const facts=panel.querySelector('#spa-extracted');if(facts&&matchedListings.length){let status=facts.querySelector('.housing-status');if(!status){status=document.createElement('div');status.className='housing-status';(facts.querySelector('details')||facts).append(status);}status.innerHTML=housingStatus(panel.querySelector('#spa-address')?.value||lead.address);}const s=headerSummary(lead,distances.get(distanceKey()));panel.querySelector('#spa-title').textContent=s.title;panel.querySelector('#spa-subtitle').textContent=s.detail;panel.dataset.over=String(s.over);const stop=panel.querySelector('#spa-stop');stop.hidden=!(manufacturedType(lead.type)||manufacturedType(listingType)||matchedListings.some(r=>manufacturedType(r.type+' '+r.style)));stop.textContent=stop.hidden?'':"CAN'T DO WORK · Manufactured/mobile";stop.style.display=stop.hidden?'none':'block';
+  function updateHeader(){const retry=panel.querySelector('#spa-distance-retry');if(retry){retry.hidden=!distances.get(distanceKey())?.error;retry.style.display=retry.hidden?'none':'';}const facts=panel.querySelector('#spa-extracted');if(facts&&matchedListings.length){let status=facts.querySelector('.housing-status');if(!status){status=document.createElement('div');status.className='housing-status';(facts.querySelector('details')||facts).append(status);}status.innerHTML=housingStatus(panel.querySelector('#spa-address')?.value||lead.address);}const s=headerSummary(lead,distances.get(distanceKey()));panel.querySelector('#spa-title').textContent=s.title;panel.querySelector('#spa-subtitle').textContent=s.detail;panel.dataset.over=String(s.over);const stop=panel.querySelector('#spa-stop');stop.hidden=!(manufacturedType(lead.type)||manufacturedType(listingType)||matchedListings.some(r=>manufacturedType(r.type+' '+r.style)));stop.textContent=stop.hidden?'':"CAN'T DO WORK · Manufactured/mobile";stop.style.display=stop.hidden?'none':'block';
     let checkBadge=panel.querySelector('#spa-check-badge');if(!checkBadge){checkBadge=document.createElement('small');checkBadge.id='spa-check-badge';panel.querySelector('.spa-heading').append(checkBadge);}
     checkBadge.textContent=lead.propertyCheck?.warning||(!canadianLead(lead)?lead.propertyCheck?.label:'')||'';checkBadge.hidden=!checkBadge.textContent;
     const warning=unitWarning(panel.querySelector('#spa-address')?.value||lead.address,lead.type,listingType,matchedListings.map(r=>r.type).join(' / '),lead.condoHint);
@@ -1268,7 +1254,7 @@
     const unitButton=panel.querySelector('#spa-unit-reviewed');if(unitButton){unitButton.hidden=!(warning.show||acknowledged);unitButton.textContent=acknowledged?'No unit applies · Undo':'Checked: no unit applies';}
   }
   // Made by Montana. Preserve creator credit when reviewing this interface.
-  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.31</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
+  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.33</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
     const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
     panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
@@ -1315,6 +1301,7 @@
     settingsBody.append(appearance,minimized);
     const resetOrder=document.createElement('button');resetOrder.type='button';resetOrder.textContent='Reset section order';
     resetOrder.onclick=()=>{if(saveValue(SECTION_ORDER_KEY,DEFAULT_SECTION_ORDER)){applySectionOrder();notice('Default section order restored.');}else notice('Could not save section order.');};settingsBody.append(resetOrder);
+    const resetSizes=document.createElement('button');resetSizes.type='button';resetSizes.textContent='Reset section sizes';resetSizes.onclick=resetSectionHeights;settingsBody.append(resetSizes);
     const resetAppearance=document.createElement('button');resetAppearance.textContent='Reset appearance';
     resetAppearance.title='Reset theme, size and position only. Other preferences and results stay unchanged.';
     resetAppearance.onclick=()=>{applyTheme('destiny');saveValue(THEME_KEY,'destiny');resetLayout();notice('Appearance reset. Other preferences and results kept.');};settingsBody.append(resetAppearance);
@@ -1330,7 +1317,7 @@
       button.append(colors,document.createTextNode(t.label));button.onclick=()=>{applyTheme(key);saveValue(THEME_KEY,key);};swatches.append(button);
     }
     themeLabel.after(favorite,gallery);
-    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.31 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
+    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.33 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
     const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
     const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
     const soundBar=document.createElement('div');soundBar.id='spa-sound-bar';
@@ -1354,7 +1341,7 @@
     window.addEventListener('resize',()=>{clamp();save();});
   }
   const SECTION_ORDER_KEY='sixx-property-section-order-v1';
-  const DEFAULT_SECTION_ORDER=['distance','workflow','history','duplicates','property','copy'];
+  const DEFAULT_SECTION_ORDER=['distance','history','duplicates','property'];
   function normalizedSectionOrder(value){
     const order=Array.isArray(value)?[...new Set(value.filter(k=>DEFAULT_SECTION_ORDER.includes(k)))]:[];
     return [...order,...DEFAULT_SECTION_ORDER.filter(k=>!order.includes(k))];
@@ -1383,10 +1370,8 @@
     section.dataset.orderKey=key;
     if(host.querySelector('.spa-move-controls'))return;
     const controls=document.createElement('span');controls.className='spa-move-controls';
-    controls.innerHTML='<button type="button" draggable="true" data-section-drag aria-label="Drag '+esc(title)+' section" title="Drag to reorder. Alt + Up/Down also moves this section.">⠿</button><button type="button" data-section-up aria-label="Move '+esc(title)+' up">↑</button><button type="button" data-section-down aria-label="Move '+esc(title)+' down">↓</button>';
-    const step=direction=>{const visible=[...section.parentElement.children].filter(n=>n.dataset.orderKey),index=visible.indexOf(section),target=visible[index+direction];if(target)moveSection(key,target.dataset.orderKey,direction>0);};
-    controls.onclick=e=>{e.preventDefault();e.stopPropagation();if(e.target.closest('[data-section-up]'))step(-1);if(e.target.closest('[data-section-down]'))step(1);};
-    controls.onkeydown=e=>{if(e.altKey&&['ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();e.stopPropagation();step(e.key==='ArrowUp'?-1:1);}};
+    controls.innerHTML='<button type="button" draggable="true" data-section-drag aria-label="Drag '+esc(title)+' section" title="Drag to reorder"><svg viewBox="0 0 20 20" width="12" height="12" aria-hidden="true"><path d="M4 6h12M4 10h12M4 14h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
+    controls.onclick=e=>{e.preventDefault();e.stopPropagation();};
     const handle=controls.querySelector('[data-section-drag]');
     handle.ondragstart=e=>{section.parentElement.dataset.dragSection=key;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',key);section.dataset.dragging='true';};
     handle.ondragend=()=>{delete section.parentElement.dataset.dragSection;for(const n of section.parentElement.children){delete n.dataset.drop;delete n.dataset.dragging;}};
@@ -1395,9 +1380,19 @@
     section.ondrop=e=>{const moving=section.parentElement.dataset.dragSection;if(!moving)return;e.preventDefault();e.stopPropagation();const after=section.dataset.drop==='after';delete section.parentElement.dataset.dragSection;for(const n of section.parentElement.children){delete n.dataset.drop;delete n.dataset.dragging;}moveSection(moving,key,after);};
     host.prepend(controls);
   }
+  const SECTION_HEIGHT_KEY='sixx-property-section-heights-v1';
+  let sectionSizeObservers=[];
+  function sectionHeight(value){return typeof value==='number'&&Number.isFinite(value)?Math.max(72,Math.min(900,Math.round(value))):null;}
+  function resetSectionHeights(){
+    if(!saveValue(SECTION_HEIGHT_KEY,{})){notice('Could not reset section sizes.');return;}
+    for(const body of panel.querySelectorAll('.spa-section-body'))body.style.height='';
+    notice('Section sizes reset.');
+  }
   function setupSections(main){
+    for(const observer of sectionSizeObservers)observer.disconnect();sectionSizeObservers=[];
+    const savedHeights=savedValue(SECTION_HEIGHT_KEY,{});
     let preferences={};try{preferences=JSON.parse(localStorage.getItem('sixx-property-sections-v1')||'{}')||{};}catch{}
-    const definitions=[['distance','spa-distance'],['history','spa-history'],['duplicates','spa-dupes'],['property','spa-extracted'],['copy','spa-name']];
+    const definitions=[['distance','spa-distance'],['history','spa-history'],['duplicates','spa-dupes'],['property','spa-extracted']];
     for(const [key,id] of definitions){
       const section=main.querySelector('#'+id)?.closest('section');if(!section)continue;
       const title=section.querySelector(':scope > strong');if(!title)continue;
@@ -1407,65 +1402,60 @@
       const body=document.createElement('div');body.className='spa-section-body';title.remove();
       while(section.firstChild)body.append(section.firstChild);
       details.append(summary,body);section.append(details);
+      const height=sectionHeight(savedHeights?.[key]);if(height)body.style.height=height+'px';
+      body.title='Drag the bottom-right corner to resize this section';
+      summary.title='Click to expand or collapse';
+      let previousHeight=body.style.height;
+      const rememberHeight=()=>{
+        if(!body.isConnected||!details.open||body.style.height===previousHeight)return;
+        previousHeight=body.style.height;const next=sectionHeight(parseFloat(body.style.height));if(!next)return;
+        const values=savedValue(SECTION_HEIGHT_KEY,{});
+        saveValue(SECTION_HEIGHT_KEY,{...(values&&typeof values==='object'&&!Array.isArray(values)?values:{}),[key]:next});
+      };
+      if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(rememberHeight);observer.observe(body);sectionSizeObservers.push(observer);}
+      body.addEventListener('pointerup',rememberHeight);
       sectionMoveControls(section,summary,key,title.textContent);
       details.addEventListener('toggle',()=>{try{const saved=JSON.parse(localStorage.getItem('sixx-property-sections-v1')||'{}')||{};saved[key]=details.open;localStorage.setItem('sixx-property-sections-v1',JSON.stringify(saved));}catch{}});
       main.append(section);
     }
     applySectionOrder();
   }
-  function renderLead(){const previousDistance=distances.get(distanceKey());const main=panel.querySelector('main');main.innerHTML=`
-    <section><strong>Copy details</strong><input id="spa-name" type="hidden" value="${esc(titleCase(lead.name))}"><label>Homeowner first name<input id="spa-first-name" value="${esc((lead.nameParts||homeownerParts(lead.name)).first)}"></label><label>Homeowner last name<input id="spa-last-name" value="${esc((lead.nameParts||homeownerParts(lead.name)).last)}"></label><small>${(lead.nameParts||homeownerParts(lead.name)).inferred?'Name split inferred. Check compound surnames or multiple homeowners before copying.':'Name fields read from the lead. Check spelling before copying.'}</small><div class="row"><button id="spa-copy-first">Copy first name</button><button id="spa-copy-last">Copy last name</button></div><label>Address<textarea id="spa-address">${esc(titleCase(lead.address,true))}</textarea></label><small>Check spelling before copying.</small>
-    ${lead.routing?`<p class="status">Routing ZIP instructions found. ${lead.uncertain?'Physical ZIP needs review before lookup/copy.':'Physical ZIP used in preview; original lead unchanged.'}</p>`:''}
-    <div class="row"><button id="spa-copy-name">Copy name</button><button id="spa-copy-address">Copy address</button><button id="spa-copy-both">Copy both</button></div><label>Design consultant<input id="spa-consultant" value="${esc(titleCase(lead.consultant))}" placeholder="Not detected; verify assignment"></label><div class="row"><button id="spa-copy-consultant">Copy consultant</button><button id="spa-copy-contract">Copy all three</button></div></section>
-    <section><strong>Appointment history &amp; warnings</strong><div id="spa-history" aria-live="polite">Reading history…</div></section>
-    <section><strong>Duplicate leads</strong><div id="spa-dupes" class="status">Waiting to check…</div><button id="spa-recheck">Recheck</button></section>
-    <section><strong>Property details</strong><div id="spa-extracted" class="status">Checking saved listing details…</div><div class="row"><select id="spa-source" aria-label="Verification source"><option value="zillow">Zillow</option><option value="redfin">Redfin</option><option value="realtor">Realtor.com</option><option value="maps">Google Maps</option></select><button id="spa-verify">Search address</button></div><div id="spa-unit-warning" class="status" role="status" hidden></div><button id="spa-unit-reviewed" hidden>Checked: no unit applies</button>
-    <details><summary>Compare a listing</summary><p>Enabled+ type: ${esc(lead.type||'Not detected')}</p><label>Address copied from listing<input id="spa-listing-address" placeholder="Full address including unit and postal code"></label><label>Property type shown<select id="spa-listing-type"><option value="">Not checked / unavailable</option>Single family</option>Townhouse</option>Condo</option>Multifamily</option>Manufactured / mobile</option>Other</option></select></label><div id="spa-comparison" class="status">Manual comparison, not automatically verified.</div></details></section>
-    ${canadianLead(lead)?`<section><strong>Canada distance</strong><div id="spa-distance" class="status">Calculating automatically…</div><button id="spa-route">Verify in Maps</button><details><summary>Distance settings &amp; details</summary><label>Verified distance (km)<input id="spa-km" type="number" min="0" step="0.1" placeholder="Automatic"></label><p>Estimate from central Mississauga. Maps uses L5N 2X5 with avoid tolls; results may differ. The 150 km cutoff applies to Central GTA only, not Eastern GTA or other markets.</p><div id="spa-distance-details"></div></details></section>`:''}`;
+  function renderLead(){
+    const main=panel.querySelector('main');
+    main.innerHTML=`
+    <input id="spa-address" type="hidden" value="${esc(lead.address)}">
+    ${canadianLead(lead)?`<section><strong>Canada distance</strong><div id="spa-distance" class="status">Calculating automatically…</div><button id="spa-route">Verify in Maps</button><button id="spa-distance-retry" hidden>Retry</button></section>`:''}
+    <section><strong>History &amp; warnings</strong><div id="spa-history" aria-live="polite">Reading history…</div></section>
+    <section><strong>Duplicate leads</strong><div id="spa-dupes" class="status">Checking automatically…</div><button id="spa-recheck">Recheck</button></section>
+    <section><strong>Property &amp; address</strong><div id="spa-extracted" class="status">Checking automatically…</div>
+    <small id="spa-address-status" role="status">Checking address…</small>
+    <div class="row"><select id="spa-source" aria-label="Verification source"><option value="zillow">Zillow</option><option value="redfin">Redfin</option><option value="realtor">Realtor.com</option><option value="maps">Google Maps</option></select><button id="spa-verify">Verify</button><button id="spa-retry-checks">Retry</button></div>
+    <div id="spa-unit-warning" class="status" role="status" hidden></div><button id="spa-unit-reviewed" hidden>Checked: no unit applies</button>
+    <details><summary>Auto-open options</summary><label class="spa-tab-toggle"><input id="spa-auto-tabs" type="checkbox"> Auto-open selected site</label><small>Shares the address with Google and the selected site.</small><small id="spa-tabs-status" role="status"></small></details></section>`;
     const get=id=>panel.querySelector('#'+id);
-    const syncName=()=>{get('spa-name').value=clean(get('spa-first-name').value+' '+get('spa-last-name').value);};
-    for(const part of ['first','last']){get('spa-'+part+'-name').oninput=syncName;get('spa-copy-'+part).onclick=()=>{const value=titleCase(get('spa-'+part+'-name').value);if(!value){notice('Check the homeowner '+part+' name before copying.');return;}copy(value);};}
-    syncName();
-    const tabs=document.createElement('div');tabs.innerHTML='<label class="spa-tab-toggle"><input id="spa-auto-tabs" type="checkbox"> Auto-open selected site only</label><small>Uses the dropdown below. One tab per check, with this address. Shares the address with Google and the selected site.</small><button id="spa-open-tabs" type="button">Open selected check</button><small id="spa-tabs-status" role="status"></small>';
-    get('spa-extracted').after(tabs);
-    get('spa-auto-tabs').checked=savedValue(PROPERTY_TABS_KEY,false)===true;
-    get('spa-auto-tabs').onchange=e=>{if(!saveValue(PROPERTY_TABS_KEY,e.target.checked)){e.target.checked=false;notice('Could not save automatic tab setting.');return;}if(e.target.checked)openPropertyTabs(false);else get('spa-tabs-status').textContent='Automatic tabs off. Existing tabs stay open.';};
-    get('spa-open-tabs').onclick=()=>openPropertyTabs(true);
     const savedSource=savedValue(PROPERTY_SOURCE_KEY,'');
-    get('spa-source').value=['zillow','redfin','realtor','maps'].includes(savedSource)?savedSource:/\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b/i.test(lead.address)?'redfin':'zillow';
-    get('spa-source').onchange=()=>{if(!saveValue(PROPERTY_SOURCE_KEY,get('spa-source').value)){notice('Could not save selected site.');return;}openPropertyTabs(false);};
-    get('spa-copy-name').onclick=()=>copy(get('spa-name').value);
-    get('spa-copy-address').onclick=()=>copy(get('spa-address').value);
-    get('spa-copy-both').onclick=()=>copy(get('spa-name').value+'\n'+get('spa-address').value);
-    get('spa-consultant').onchange=e=>{e.target.value=titleCase(e.target.value);};
-    get('spa-copy-consultant').onclick=()=>{const value=titleCase(get('spa-consultant').value);if(!value){notice('Consultant not detected. Verify the assignment first.');return;}copy(value);};
-    get('spa-copy-contract').onclick=()=>{const values=[titleCase(get('spa-name').value),titleCase(get('spa-address').value,true),titleCase(get('spa-consultant').value)];if(values.some(v=>!v)){notice('Name, full address and verified consultant are needed for Copy all three.');return;}copy(values.join('\n'));};
+    get('spa-source').value=['zillow','redfin','realtor','maps'].includes(savedSource)?savedSource:canadianLead(lead)?'redfin':'zillow';
+    get('spa-source').onchange=()=>{if(saveValue(PROPERTY_SOURCE_KEY,get('spa-source').value))openPropertyTabs(false);};
+    get('spa-auto-tabs').checked=savedValue(PROPERTY_TABS_KEY,false)===true;
+    get('spa-auto-tabs').onchange=e=>{if(!saveValue(PROPERTY_TABS_KEY,e.target.checked)){e.target.checked=false;return;}if(e.target.checked)openPropertyTabs(false);};
+    get('spa-verify').onclick=()=>{const address=clean(get('spa-address').value);if(!lead.street||!address){notice('Address missing on this lead.');return;}window.open(searchUrl(get('spa-source').value,address),'_blank','noopener');};
     get('spa-unit-reviewed').onclick=()=>{const key=unitReviewKey();if(unitAcknowledgments.has(key))unitAcknowledgments.delete(key);else unitAcknowledgments.add(key);updateHeader();};
-    get('spa-verify').onclick=()=>{const address=clean(get('spa-address').value);if(!lead.street||!address){notice('Address missing. Check the lead.');return;}window.open(searchUrl(get('spa-source').value,address),'_blank','noopener');};
     get('spa-recheck').onclick=()=>duplicateCheck();
-    const compare=()=>{const address=clean(get('spa-listing-address').value),type=get('spa-listing-type').value,box=get('spa-comparison');listingType=type;updateHeader();const same=address&&normAddress(address)===normAddress(get('spa-address').value),comparison=typeComparison(lead.type,type);box.dataset.tone=manufacturedType(type)||comparison.tone==='red'?'red':same&&comparison.tone==='green'?'green':'';box.textContent=(manufacturedType(type)?"CAN'T DO WORK: manufactured/mobile homes are out of scope in all territories. ":'')+(address?(same?'Address text matches. ':'Address differs: review spelling, unit and postal code. '):'No listing address entered. ')+comparison.text;};
-    get('spa-listing-address').oninput=compare;get('spa-listing-type').onchange=compare;get('spa-address').oninput=compare;
-    if(get('spa-route')){const section=get('spa-route').closest('section');main.prepend(section);get('spa-km').value=distances.get(distanceKey())?.km??'';get('spa-route').onclick=()=>window.open(routeUrl(get('spa-address').value),'_blank','noopener');get('spa-km').oninput=e=>{const value=e.target.value,level=value===''?'unknown':distanceStatus(Number(value)),box=get('spa-distance');if(level==='unknown')distances.delete(distanceKey());else distances.set(distanceKey(),{km:Number(value)});if(distances.size>50)distances.delete(distances.keys().next().value);updateHeader();box.dataset.tone=level==='over'?'red':level==='within'?'green':'';box.textContent=level==='unknown'?'Not checked.':level==='over'?'Over 150 km: beyond hard cutoff. Review before proceeding.':level==='near'?'Above 147 km: close to cutoff. Recheck route settings.':'Within 150 km based on your entered distance; other eligibility checks still apply.';};get('spa-km').dispatchEvent(new Event('input'));}
-    get('spa-address').addEventListener('input',()=>{distances.delete(distanceKey());if(get('spa-km')){get('spa-km').value='';get('spa-km').dispatchEvent(new Event('input'));}updateHeader();});
-    get('spa-address').addEventListener('input',refreshListing);
-    const addressRow=document.createElement('div');addressRow.innerHTML='<small id="spa-address-status" role="status">Google Maps address not checked</small><button type="button" id="spa-address-verify">Verify address in Maps</button>';
-    get('spa-extracted').after(addressRow);
-    addressRow.querySelector('button').onclick=()=>{const address=clean(get('spa-address').value);if(address)window.open(searchUrl('maps',address),'_blank','noopener,noreferrer');};
-    if(get('spa-route'))get('spa-route').onclick=()=>{const address=clean(get('spa-address').value),id=listingIdentity(address);if(!id){notice('A full street address and postal code are needed.');return;}const old=savedValue(REQUESTS_KEY,[]),now=Date.now();const stored=saveValue(REQUESTS_KEY,[{identity:id,readAt:now},...(Array.isArray(old)?old.filter(r=>r&&r.identity!==id&&now-r.readAt<LISTING_TTL):[])].slice(0,10));window.open(routeUrl(address),'_blank','noopener');notice(stored?'In Maps open Options so Avoid tolls can be verified. The selected driving distance will return here.':'Result storage unavailable. Read the route and enter kilometres manually.');};
+    get('spa-retry-checks').onclick=e=>{const button=e.currentTarget;button.disabled=true;retryFailedChecks();setTimeout(()=>{if(button.isConnected)button.disabled=false;},30000);};
+    if(get('spa-distance-retry'))get('spa-distance-retry').onclick=async e=>{
+      const button=e.currentTarget,address=clean(get('spa-address').value),key=distanceKey();
+      if(button.disabled||!distances.get(key)?.error)return;
+      button.disabled=true;estimateRequests.delete(address);distances.delete(key);
+      try{await automaticDistance();}finally{setTimeout(()=>{if(button.isConnected)button.disabled=false;},30000);}
+    };
+    for(const [id,title] of Object.entries({'spa-route':'Optional: compare the route in Google Maps','spa-distance-retry':'Try the automatic distance lookup again','spa-verify':'Open the selected website search for this address','spa-retry-checks':'Retry failed checks without clearing successful results','spa-source':'Choose the website used by Verify','spa-recheck':'Look for duplicate leads again'}))if(get(id))get(id).title=title;
+    if(get('spa-route'))get('spa-route').onclick=()=>window.open(routeUrl(get('spa-address').value),'_blank','noopener');
     if(canadianLead(lead)){
       let warning=panel.querySelector('#spa-territory-warning');if(!warning){warning=document.createElement('small');warning.id='spa-territory-warning';panel.querySelector('.spa-heading').append(warning);}
       warning.textContent='150 km cutoff: Central GTA only.';
-      if(previousDistance?.estimated)distances.set(distanceKey(),previousDistance);
-    }else {
-      panel.querySelector('#spa-territory-warning')?.remove();
-    }
-    const retry=document.createElement('button');retry.textContent='Retry failed checks';retry.id='spa-retry-checks';retry.title='Retry unsuccessful checks only; keep successful results, layout and settings';
-    get('spa-extracted').after(retry);retry.onclick=()=>{retry.disabled=true;retryFailedChecks();setTimeout(()=>{if(retry.isConnected)retry.disabled=false;},30000);};
+    }else panel.querySelector('#spa-territory-warning')?.remove();
     setupSections(main);
     refreshHistory();refreshListing();refreshRoute();updateHeader();automaticDistance();automaticHousing();automaticAddressCheck();
-    get('spa-address').addEventListener('change',()=>automaticDistance());
-    get('spa-address').addEventListener('change',()=>automaticHousing());
-    get('spa-address').addEventListener('change',()=>automaticAddressCheck());
   }
   async function duplicateCheck(){controller?.abort();const token=++generation,current=lead;const box=panel.querySelector('#spa-dupes');
     if(!current.id||!current.lastName||!current.street||!current.zip){box.textContent='Unavailable: name, address, postal code or lead ID missing.';return;}
@@ -1485,8 +1475,8 @@
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.7.31 · '+[...startupIssues].join('; '):'v0.7.31 TEST · Read-only');
-    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.31 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.33 · '+[...startupIssues].join('; '):'v0.7.33 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.33 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -1567,7 +1557,7 @@
   watchValue(LISTINGS_KEY,refreshListing);
   watchValue(SECTION_ORDER_KEY,applySectionOrder);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.7.31 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.33 · '+[...startupIssues].join('; '));
   watchValue(HISTORY_SOUND_KEY,updateHistorySound);
   document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
   window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);
