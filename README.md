@@ -1,6 +1,6 @@
 # test: Property Assistant
 
-Made by Montana. Version 0.7.30, review build.
+Made by Montana. Version 0.7.31, review build.
 
 [Download / install the Tampermonkey script](https://raw.githubusercontent.com/TheOfficialsixx/test/main/enabledplus-property-assistant.test.user.js)
 
@@ -8,6 +8,7 @@ Open the link with Tampermonkey installed, or save the file and import it into T
 
 ## Features
 
+- Reorder sections with drag handles or Move up/down buttons. The layout is saved across leads and refreshes, with a Reset section order control. Existing collapse controls are preserved.
 - Top-left notification inbox with individual review/dismiss controls, history evidence, rechecks and a saved mute control. Dismissal is session-only and does not resolve underlying warnings.
 - Google Maps address checks distinguish no readable match from an unavailable lookup. Property searches support additional link formats and up to three candidates while retaining address-match safeguards.
 - Faster optional alert cadence, failed-check retries that preserve successful results, and additional stale-lead and window-boundary safeguards.
@@ -32,7 +33,7 @@ External sites may block requests or have no matching listing. Unavailable is no
 
 Address checks send the lead address to external search, housing, geocoding and routing services. Use only with company authorization. No customer records or credentials are included in this repository.
 
-Twenty-one local test suites passed before upload. Synthetic browser testing covered rendering, notifications and saved sound settings. The synthetic testing page is not part of the installed script. Live-lead validation of this build remains pending; this is not a guarantee of live external-site availability.
+Twenty-two local test suites passed before upload. Synthetic browser testing covered section dragging, move buttons, collapse controls and order persistence after refresh, alongside prior rendering, notifications and saved sound checks. The synthetic testing page is not part of the installed script. Live-lead validation of this build remains pending; this is not a guarantee of live external-site availability.
 
 To update on another PC, open the install link and accept the update in Tampermonkey, then refresh the lead tabs. Refreshing the lead alone does not install this update. Disable duplicate older Property Assistant copies.
 

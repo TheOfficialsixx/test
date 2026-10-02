@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Enabled+ Property Assistant TEST
 // @namespace    sixx.enabledplus.tools.test
-// @version      0.7.30
+// @version      0.7.31
 // @description  Local test: duplicate candidates, formatted copy, property comparison and Central GTA map check. No lead edits.
 // @author       Montana (Sixx)
 // @match        https://www.enabledplus.com/Lead*
@@ -786,6 +786,13 @@
     #${ID}-notifications article small{display:block;white-space:pre-line;color:var(--spa-muted)}
     #${ID}-notifications p{margin:6px 0}
     #${ID}-notifications .spa-inbox-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+    #${ID} .spa-move-controls{display:inline-flex;flex:0 0 auto;gap:2px;margin-right:4px;vertical-align:middle}
+    #${ID} .spa-move-controls button{min-height:24px;width:22px;padding:0;font-size:12px;line-height:22px}
+    #${ID} [data-section-drag]{cursor:grab}
+    #${ID} section[data-dragging=true]{opacity:.65}
+    #${ID} section[data-drop=before]{border-top:3px solid var(--spa-accent)}
+    #${ID} section[data-drop=after]{border-bottom:3px solid var(--spa-accent)}
+    #${ID} .spa-section>summary{flex-wrap:wrap}
     @container (max-width:360px){
       #${ID} main,#${ID} .spa-section-body{padding:7px}
       #${ID} .row{flex-direction:column}
@@ -984,6 +991,8 @@
     const wasOpen=box.querySelector('details')?.open;box.dataset.fingerprint=fingerprint;
     const top=items[0],warnings=items.filter(i=>i.kind==='warning').length,unknowns=items.filter(i=>i.kind==='unknown').length;
     box.innerHTML='<div class="spa-section-body"><strong>Next action'+(top?' · '+esc(top.title):'')+'</strong><p>'+esc(top?.text||'No listed review flags. Continue the script and required checks; this is not automatic clearance.')+'</p><small>'+warnings+' warning(s) · '+items.filter(i=>i.kind==='review').length+' review(s) · '+unknowns+' unverified check(s)'+(reviewed?' · Reviewed this session':'')+'</small><details'+(wasOpen?' open':'')+'><summary>Review details ('+items.length+')</summary><div class="spa-history-scroll" tabindex="0" role="region" aria-label="Prioritized issues and evidence">'+items.map((item,i)=>'<div class="status" data-tone="'+(item.kind==='warning'?'red':'')+'"><strong>'+esc(item.kind==='unknown'?'NOT VERIFIED':item.kind==='warning'?'WARNING':'REVIEW')+': '+esc(item.title)+'</strong><p>'+esc(item.text)+'</p><details><summary>Why this is flagged</summary><p style="white-space:pre-line">'+esc(item.evidence)+'</p></details><button type="button" data-workflow-open="'+i+'">Open relevant details</button></div>').join('')+'</div></details><div class="row"><button type="button" data-workflow-copy>Copy history summary</button>'+(items.length?'<button type="button" data-workflow-review>'+ (reviewed?'Undo reviewed':'Mark these reviewed')+'</button>':'')+'</div><small>Reviewed does not clear a warning, mute sound, or approve confirmation. Refresh reminds you again.</small></div>';
+    sectionMoveControls(box,box.querySelector('.spa-section-body'),'workflow','Next action');
+    applySectionOrder();
     box.onclick=e=>{
       const open=e.target.closest?.('[data-workflow-open]');if(open){const item=items[Number(open.dataset.workflowOpen)];if(!item)return;const target=panel.querySelector('#'+item.target);const section=target?.closest('details');if(section)section.open=true;target?.scrollIntoView({block:'nearest'});}
       if(e.target.closest?.('[data-workflow-copy]'))copy(historyReviewCopy(readAppointmentHistory()));
@@ -1018,7 +1027,7 @@
   }
   function safeIssueReport(){
     // Deliberate allowlist: never copy lead text, IDs, URLs, names, addresses, or raw errors.
-    return ['Property Assistant v0.7.30','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
+    return ['Property Assistant v0.7.31','Mode: '+(panel.dataset.bubble==='true'?'bubble':panel.dataset.mini==='true'?'compact':'full'),'Theme: '+(Object.hasOwn(THEMES,panel.dataset.theme)?panel.dataset.theme:'unknown'),'Panel size: '+Math.round(panel.getBoundingClientRect().width)+' x '+Math.round(panel.getBoundingClientRect().height),'Lead loaded: '+!!lead,'Distance result present: '+!!(lead&&Number.isFinite(distances.get(distanceKey())?.km)),'Property sources with results: '+['Zillow','Redfin','Realtor.com'].filter(source=>matchedListings.some(r=>r.source===source)).join(', '),'Startup issue count: '+startupIssues.size,'Please describe what happened (do not include customer information).'].join('\n');
   }
   function miniLabel(){const b=panel.querySelector('[data-action=mini]');b.textContent=panel.dataset.mini==='true'?'+':'−';b.title=panel.dataset.mini==='true'?'Restore':'Minimize';b.setAttribute('aria-label',b.title);}
   async function copy(value){try{await navigator.clipboard.writeText(value);notice('Copied.');}catch{notice('Clipboard unavailable. Select the preview text and copy manually.');}}
@@ -1259,7 +1268,7 @@
     const unitButton=panel.querySelector('#spa-unit-reviewed');if(unitButton){unitButton.hidden=!(warning.show||acknowledged);unitButton.textContent=acknowledged?'No unit applies · Undo':'Checked: no unit applies';}
   }
   // Made by Montana. Preserve creator credit when reviewing this interface.
-  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.30</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
+  function startPanel(){styles();panel=document.createElement('aside');panel.id=ID;panel.setAttribute('aria-label','Property Assistant test panel');panel.innerHTML='<header><div class="spa-heading"><small id="spa-version">TEST · v0.7.31</small><div id="spa-compact" aria-live="polite"></div><strong id="spa-title">Property Assistant · TEST</strong><small id="spa-subtitle"></small><span id="spa-stop" class="spa-stop" style="display:none"></span></div><button data-action="mini" aria-label="Minimize">−</button></header><main></main><footer><span id="spa-notice" role="status" aria-live="polite">TEST · No company records changed.</span><button id="spa-reset-layout" title="Restore default window position and size">Reset layout</button><small id="spa-credit" style="flex-basis:100%" title="Made by Montana. Authorized internal review and testing only. No reproduction, redistribution, republication, or removal of attribution without Montana’s prior written consent. Unofficial tool.">Made by Montana</small></footer>';document.body.append(panel);restore();panel.querySelector('#spa-reset-layout').onclick=resetLayout;
     const unitBadge=document.createElement('small');unitBadge.id='spa-unit-badge';unitBadge.hidden=true;panel.querySelector('.spa-heading').append(unitBadge);
     const audioControls=document.createElement('div');audioControls.className='spa-audio-settings';audioControls.innerHTML='<button type="button" id="spa-history-sound">Enable sound</button><button type="button" id="spa-history-ack" hidden>Acknowledge</button><small id="spa-audio-status" role="status"></small>';panel.querySelector('footer').append(audioControls);
     panel.querySelector('#spa-audio-status').onclick=unlockHistorySound;
@@ -1304,6 +1313,8 @@
     }
     const help=document.createElement('small');help.textContent='Important warnings always remain visible. Each main section remembers whether you leave it open or closed.';minimized.append(help);
     settingsBody.append(appearance,minimized);
+    const resetOrder=document.createElement('button');resetOrder.type='button';resetOrder.textContent='Reset section order';
+    resetOrder.onclick=()=>{if(saveValue(SECTION_ORDER_KEY,DEFAULT_SECTION_ORDER)){applySectionOrder();notice('Default section order restored.');}else notice('Could not save section order.');};settingsBody.append(resetOrder);
     const resetAppearance=document.createElement('button');resetAppearance.textContent='Reset appearance';
     resetAppearance.title='Reset theme, size and position only. Other preferences and results stay unchanged.';
     resetAppearance.onclick=()=>{applyTheme('destiny');saveValue(THEME_KEY,'destiny');resetLayout();notice('Appearance reset. Other preferences and results kept.');};settingsBody.append(resetAppearance);
@@ -1319,7 +1330,7 @@
       button.append(colors,document.createTextNode(t.label));button.onclick=()=>{applyTheme(key);saveValue(THEME_KEY,key);};swatches.append(button);
     }
     themeLabel.after(favorite,gallery);
-    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.30 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
+    const guide=document.createElement('details'),guideTitle=document.createElement('summary'),guideText=document.createElement('p');guideTitle.textContent='Version & update help';guideText.textContent='TEST v0.7.31 · Made by Montana. Install the new test script, disable older Property Assistant copies, then refresh your lead tabs. Keep the separate historic tool if you use it. Check marks mean a matching property type was read, not permission to confirm. Red X: mobile/manufactured; amber: review needed. External checks can be unavailable. No company records are changed.';guide.append(guideTitle,guideText);settingsBody.append(guide);
     const snapLabel=document.createElement('label'),snapInput=document.createElement('input');snapInput.type='checkbox';snapInput.checked=savedValue('sixx-property-edge-snap-v1',false)===true;snapInput.onchange=()=>{if(!saveValue('sixx-property-edge-snap-v1',snapInput.checked))notice('Could not save edge snapping preference.');};snapLabel.append(snapInput,document.createTextNode(' Snap bubble near screen edges'));settingsBody.append(snapLabel);
     const report=document.createElement('button');report.textContent='Copy issue report';report.title='Copies tool diagnostics only. No homeowner information.';report.onclick=()=>copy(safeIssueReport());settingsBody.append(report);panel.querySelector('footer').prepend(settings);
     const soundBar=document.createElement('div');soundBar.id='spa-sound-bar';
@@ -1342,6 +1353,48 @@
     window.addEventListener('storage',e=>{if(e.key===KEY){windowSync=true;restore();setTimeout(()=>windowSync=false,500);}});
     window.addEventListener('resize',()=>{clamp();save();});
   }
+  const SECTION_ORDER_KEY='sixx-property-section-order-v1';
+  const DEFAULT_SECTION_ORDER=['distance','workflow','history','duplicates','property','copy'];
+  function normalizedSectionOrder(value){
+    const order=Array.isArray(value)?[...new Set(value.filter(k=>DEFAULT_SECTION_ORDER.includes(k)))]:[];
+    return [...order,...DEFAULT_SECTION_ORDER.filter(k=>!order.includes(k))];
+  }
+  function reorderedSections(order,visible,key,target,after){
+    const list=visible.filter(k=>k!==key),index=list.indexOf(target);
+    if(index<0||key===target||!visible.includes(key))return order;
+    list.splice(index+(after?1:0),0,key);
+    let i=0;return normalizedSectionOrder(order).map(k=>visible.includes(k)?list[i++]:k);
+  }
+  function applySectionOrder(){
+    const main=panel?.querySelector('main');if(!main)return;
+    const order=normalizedSectionOrder(savedValue(SECTION_ORDER_KEY,[]));
+    const sections=[...main.children].filter(n=>n.dataset.orderKey);
+    const wanted=order.map(k=>sections.find(n=>n.dataset.orderKey===k)).filter(Boolean);
+    if(wanted.some((n,i)=>n!==sections[i]))for(const node of wanted)main.append(node);
+  }
+  function moveSection(key,target,after=false){
+    const main=panel?.querySelector('main');if(!main)return;
+    const visible=[...main.children].map(n=>n.dataset.orderKey).filter(Boolean);
+    const order=reorderedSections(normalizedSectionOrder(savedValue(SECTION_ORDER_KEY,[])),visible,key,target,after);
+    if(!saveValue(SECTION_ORDER_KEY,order)){notice('Could not save section order.');return;}
+    applySectionOrder();notice('Section order saved.');
+  }
+  function sectionMoveControls(section,host,key,title){
+    section.dataset.orderKey=key;
+    if(host.querySelector('.spa-move-controls'))return;
+    const controls=document.createElement('span');controls.className='spa-move-controls';
+    controls.innerHTML='<button type="button" draggable="true" data-section-drag aria-label="Drag '+esc(title)+' section" title="Drag to reorder. Alt + Up/Down also moves this section.">⠿</button><button type="button" data-section-up aria-label="Move '+esc(title)+' up">↑</button><button type="button" data-section-down aria-label="Move '+esc(title)+' down">↓</button>';
+    const step=direction=>{const visible=[...section.parentElement.children].filter(n=>n.dataset.orderKey),index=visible.indexOf(section),target=visible[index+direction];if(target)moveSection(key,target.dataset.orderKey,direction>0);};
+    controls.onclick=e=>{e.preventDefault();e.stopPropagation();if(e.target.closest('[data-section-up]'))step(-1);if(e.target.closest('[data-section-down]'))step(1);};
+    controls.onkeydown=e=>{if(e.altKey&&['ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();e.stopPropagation();step(e.key==='ArrowUp'?-1:1);}};
+    const handle=controls.querySelector('[data-section-drag]');
+    handle.ondragstart=e=>{section.parentElement.dataset.dragSection=key;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',key);section.dataset.dragging='true';};
+    handle.ondragend=()=>{delete section.parentElement.dataset.dragSection;for(const n of section.parentElement.children){delete n.dataset.drop;delete n.dataset.dragging;}};
+    section.ondragover=e=>{const moving=section.parentElement.dataset.dragSection;if(!moving||moving===key)return;e.preventDefault();e.dataTransfer.dropEffect='move';section.dataset.drop=e.clientY<section.getBoundingClientRect().top+section.offsetHeight/2?'before':'after';};
+    section.ondragleave=e=>{if(!section.contains(e.relatedTarget))delete section.dataset.drop;};
+    section.ondrop=e=>{const moving=section.parentElement.dataset.dragSection;if(!moving)return;e.preventDefault();e.stopPropagation();const after=section.dataset.drop==='after';delete section.parentElement.dataset.dragSection;for(const n of section.parentElement.children){delete n.dataset.drop;delete n.dataset.dragging;}moveSection(moving,key,after);};
+    host.prepend(controls);
+  }
   function setupSections(main){
     let preferences={};try{preferences=JSON.parse(localStorage.getItem('sixx-property-sections-v1')||'{}')||{};}catch{}
     const definitions=[['distance','spa-distance'],['history','spa-history'],['duplicates','spa-dupes'],['property','spa-extracted'],['copy','spa-name']];
@@ -1354,9 +1407,11 @@
       const body=document.createElement('div');body.className='spa-section-body';title.remove();
       while(section.firstChild)body.append(section.firstChild);
       details.append(summary,body);section.append(details);
+      sectionMoveControls(section,summary,key,title.textContent);
       details.addEventListener('toggle',()=>{try{const saved=JSON.parse(localStorage.getItem('sixx-property-sections-v1')||'{}')||{};saved[key]=details.open;localStorage.setItem('sixx-property-sections-v1',JSON.stringify(saved));}catch{}});
       main.append(section);
     }
+    applySectionOrder();
   }
   function renderLead(){const previousDistance=distances.get(distanceKey());const main=panel.querySelector('main');main.innerHTML=`
     <section><strong>Copy details</strong><input id="spa-name" type="hidden" value="${esc(titleCase(lead.name))}"><label>Homeowner first name<input id="spa-first-name" value="${esc((lead.nameParts||homeownerParts(lead.name)).first)}"></label><label>Homeowner last name<input id="spa-last-name" value="${esc((lead.nameParts||homeownerParts(lead.name)).last)}"></label><small>${(lead.nameParts||homeownerParts(lead.name)).inferred?'Name split inferred. Check compound surnames or multiple homeowners before copying.':'Name fields read from the lead. Check spelling before copying.'}</small><div class="row"><button id="spa-copy-first">Copy first name</button><button id="spa-copy-last">Copy last name</button></div><label>Address<textarea id="spa-address">${esc(titleCase(lead.address,true))}</textarea></label><small>Check spelling before copying.</small>
@@ -1430,8 +1485,8 @@
       generation++;controller?.abort();lead=next;listingType='';matchedListing=null;matchedListings=[];
       renderLead();identity=key; // Only cache successful rendering so the next scan can retry a failure.
       duplicateCheck().catch(()=>notice('Duplicate lookup unavailable. Other checks remain available.'));
-      notice(startupIssues.size?'v0.7.30 · '+[...startupIssues].join('; '):'v0.7.30 TEST · Read-only');
-    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.30 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
+      notice(startupIssues.size?'v0.7.31 · '+[...startupIssues].join('; '):'v0.7.31 TEST · Read-only');
+    }catch(error){identity='';setHistoryAlarm('');if(panel?.querySelector('#spa-notice'))notice('v0.7.31 · Lead reader could not finish ('+String(error?.name||'Error')+'). Retrying automatically.');}
   }
   function schedule(){clearTimeout(scanTimer);scanTimer=setTimeout(scan,600);}
   if(location.hostname==='www.enabledplus.com'&&/\/WebForms\/AppointmentCalendar\.aspx$/i.test(location.pathname)){
@@ -1510,8 +1565,9 @@
   }
   scan();
   watchValue(LISTINGS_KEY,refreshListing);
+  watchValue(SECTION_ORDER_KEY,applySectionOrder);
   watchValue(ROUTES_KEY,refreshRoute);
-  if(startupIssues.size&&panel)notice('v0.7.30 · '+[...startupIssues].join('; '));
+  if(startupIssues.size&&panel)notice('v0.7.31 · '+[...startupIssues].join('; '));
   watchValue(HISTORY_SOUND_KEY,updateHistorySound);
   document.addEventListener('pointerdown',unlockHistorySound,{passive:true});document.addEventListener('keydown',unlockHistorySound);
   window.addEventListener('blur',stopHistorySound);window.addEventListener('focus',updateHistorySound);window.addEventListener('pagehide',stopHistorySound);
